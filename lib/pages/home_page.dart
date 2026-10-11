@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import '../app_data.dart';
 import '../models/mochi.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_snackbar.dart';
+import '../widgets/mochi_image.dart';
 import 'cart_page.dart';
 import 'favorite_page.dart';
 import 'mochi_detail_page.dart';
-import 'about_page.dart';
+import 'profile_page.dart';
 
 final List<Mochi> mochiData = [
   Mochi(
@@ -64,6 +66,21 @@ final List<Mochi> mochiData = [
   ),
 ];
 
+// Gaya teks judul (Fredoka).
+TextStyle _displayStyle(
+  double size, {
+  Color color = AppTheme.cocoa,
+  double? height,
+}) {
+  return TextStyle(
+    fontFamily: AppTheme.fontDisplay,
+    fontSize: size,
+    fontWeight: FontWeight.w600,
+    color: color,
+    height: height,
+  );
+}
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -116,26 +133,18 @@ class _HomePageState extends State<HomePage> {
   List<Mochi> get _filteredMochi {
     List<Mochi> result = List<Mochi>.from(mochiData);
 
-    // ==========================================
     // SEARCH
-    // ==========================================
-
     if (_searchQuery.isNotEmpty) {
       result = result.where((mochi) {
         final name = mochi.name.toLowerCase();
-
         final description = mochi.description.toLowerCase();
-
         final query = _searchQuery.toLowerCase();
 
         return name.contains(query) || description.contains(query);
       }).toList();
     }
 
-    // ==========================================
     // PILIHAN RASA
-    // ==========================================
-
     if (_selectedFilter != 'Semua') {
       result = result.where((mochi) {
         final name = mochi.name.toLowerCase();
@@ -144,10 +153,7 @@ class _HomePageState extends State<HomePage> {
       }).toList();
     }
 
-    // ==========================================
     // SORT / URUTKAN
-    // ==========================================
-
     if (_selectedSort == 'Rating tertinggi') {
       result.sort((a, b) => b.rating.compareTo(a.rating));
     }
@@ -177,668 +183,462 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // ===========================================================
+  // HEADER (sapaan + tombol keranjang)
+  // ===========================================================
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 240),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Hello, Mochi Lover!',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.cocoa.withValues(alpha: 0.8),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Temukan Mochi Favoritmu',
+                      style: _displayStyle(24, height: 1.15),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          _buildCartButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCartButton() {
+    return ValueListenableBuilder<List<Map<String, dynamic>>>(
+      valueListenable: AppData.cart,
+      builder: (context, cart, child) {
+        final totalQuantity = cart.fold<int>(
+          0,
+          (sum, item) => sum + ((item['quantity'] ?? 1) as int),
+        );
+
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: AppTheme.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.cocoa.withValues(alpha: 0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                tooltip: 'Keranjang',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const CartPage()),
+                  );
+                },
+                icon: const Icon(
+                  Icons.shopping_bag_outlined,
+                  color: AppTheme.cocoa,
+                ),
+              ),
+            ),
+
+            if (totalQuantity > 0)
+              Positioned(
+                right: -5,
+                top: -5,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  constraints: const BoxConstraints(
+                    minWidth: 20,
+                    minHeight: 20,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: AppTheme.primaryDeep,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    totalQuantity > 9 ? '9+' : '$totalQuantity',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppTheme.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ===========================================================
+  // SEARCH BAR
+  // ===========================================================
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.cocoa.withValues(alpha: 0.06),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: TextField(
+          controller: _searchController,
+          onChanged: (value) {
+            setState(() {
+              _searchQuery = value;
+            });
+          },
+          style: const TextStyle(
+            color: AppTheme.cocoa,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+          decoration: InputDecoration(
+            hintText: 'Cari mochi favoritmu...',
+            prefixIcon: const Icon(
+              Icons.search_rounded,
+              color: AppTheme.primaryDeep,
+              size: 22,
+            ),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    tooltip: 'Hapus pencarian',
+                    onPressed: () {
+                      _searchController.clear();
+
+                      setState(() {
+                        _searchQuery = '';
+                      });
+                    },
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: AppTheme.cocoa,
+                    ),
+                  )
+                : null,
+            contentPadding: const EdgeInsets.symmetric(vertical: 15),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ===========================================================
+  // BANNER PROMO
+  // ===========================================================
+
+  Widget _buildPromoBanner() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: Container(
+        width: double.infinity,
+        constraints: const BoxConstraints(minHeight: 128),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppTheme.primaryDeep, AppTheme.primary],
+          ),
+          borderRadius: BorderRadius.circular(26),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primary.withValues(alpha: 0.25),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.yellow,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      'MOCHIÉ SPECIAL',
+                      style: TextStyle(
+                        color: AppTheme.cocoa,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  Text(
+                    'Sweet moments,\none bite away',
+                    style: _displayStyle(
+                      22,
+                      color: AppTheme.white,
+                      height: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(width: 8),
+
+            // Dua bola mochi dekoratif
+            SizedBox(
+              width: 108,
+              height: 72,
+              child: Stack(
+                children: const [
+                  Positioned(
+                    left: 0,
+                    bottom: 0,
+                    child: _MochiBall(size: 70, color: AppTheme.peach),
+                  ),
+                  Positioned(
+                    left: 52,
+                    bottom: 0,
+                    child: _MochiBall(size: 56, color: AppTheme.yellow),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ===========================================================
+  // CHIP PILIHAN RASA
+  // ===========================================================
+
+  Widget _buildFilterChips() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: SizedBox(
+        height: 42,
+        child: ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          scrollDirection: Axis.horizontal,
+          itemCount: _filters.length,
+          itemBuilder: (context, index) {
+            final filter = _filters[index];
+            final isSelected = _selectedFilter == filter;
+
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                label: Text(filter),
+                selected: isSelected,
+                onSelected: (_) {
+                  setState(() {
+                    _selectedFilter = filter;
+                  });
+                },
+                labelStyle: TextStyle(
+                  color: isSelected ? AppTheme.white : AppTheme.cocoa,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                backgroundColor: AppTheme.white,
+                selectedColor: AppTheme.primaryDeep,
+                side: BorderSide(
+                  color: isSelected ? AppTheme.primaryDeep : AppTheme.dustyRose,
+                  width: 1.5,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                showCheckmark: false,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // ===========================================================
+  // JUDUL "VARIAN MOCHI" + FILTER/SORT
+  // ===========================================================
+
+  PopupMenuItem<String> _sortItem(String value, IconData icon, Color color) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 19, color: color),
+          const SizedBox(width: 10),
+          Text(value),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader() {
+    final isSortActive = _selectedSort != 'Default';
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+      child: Row(
+        children: [
+          Text('Varian Mochi', style: _displayStyle(20)),
+
+          const Spacer(),
+
+          PopupMenuButton<String>(
+            initialValue: _selectedSort,
+            onSelected: (value) {
+              setState(() {
+                _selectedSort = value;
+              });
+            },
+            itemBuilder: (context) {
+              return [
+                _sortItem('Default', Icons.grid_view_rounded, AppTheme.cocoa),
+                _sortItem(
+                  'Rating tertinggi',
+                  Icons.star_rounded,
+                  AppTheme.primaryDeep,
+                ),
+                _sortItem(
+                  'Harga termahal',
+                  Icons.arrow_upward_rounded,
+                  AppTheme.cocoa,
+                ),
+                _sortItem(
+                  'Harga termurah',
+                  Icons.arrow_downward_rounded,
+                  AppTheme.cocoa,
+                ),
+              ];
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                color: isSortActive ? AppTheme.softPink : AppTheme.white,
+                borderRadius: BorderRadius.circular(13),
+                border: Border.all(
+                  color: isSortActive ? AppTheme.primary : AppTheme.dustyRose,
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _sortLabel(),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.cocoa,
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 18,
+                    color: AppTheme.cocoa,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ===========================================================
+  // KONTEN HOME
+  // ===========================================================
+
   Widget _buildHomeContent() {
+    // Dihitung sekali per build.
+    final mochiList = _filteredMochi;
+
     return SafeArea(
       child: CustomScrollView(
         slivers: [
-          // =====================================================
-          // HEADER
-          // =====================================================
+          SliverToBoxAdapter(child: _buildHeader()),
+          SliverToBoxAdapter(child: _buildSearchBar()),
+          SliverToBoxAdapter(child: _buildPromoBanner()),
+          SliverToBoxAdapter(child: _buildFilterChips()),
+          SliverToBoxAdapter(child: _buildSectionHeader()),
 
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Hello, Mochi Lover! 👋',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.darkPlum,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-
-                        const SizedBox(height: 4),
-
-                        const Text(
-                          'Temukan Mochi Favoritmu',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                            color: AppTheme.darkPlum,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // CART BUTTON
-                  ValueListenableBuilder<List<Map<String, dynamic>>>(
-                    valueListenable: AppData.cart,
-                    builder: (context, cart, child) {
-                      final totalQuantity = cart.fold<int>(
-                        0,
-                        (sum, item) => sum + ((item['quantity'] ?? 1) as int),
-                      );
-
-                      return Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: AppTheme.white,
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppTheme.darkPlum.withValues(
-                                    alpha: 0.06,
-                                  ),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
-                            ),
-                            child: IconButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const CartPage(),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(
-                                Icons.shopping_bag_outlined,
-                                color: AppTheme.darkPlum,
-                              ),
-                            ),
-                          ),
-
-                          if (totalQuantity > 0)
-                            Positioned(
-                              right: -4,
-                              top: -5,
-                              child: Container(
-                                padding: const EdgeInsets.all(5),
-                                constraints: const BoxConstraints(
-                                  minWidth: 21,
-                                  minHeight: 21,
-                                ),
-                                decoration: const BoxDecoration(
-                                  color: AppTheme.dustyRoseDark,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Text(
-                                  totalQuantity > 9 ? '9+' : '$totalQuantity',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: AppTheme.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // =====================================================
-          // SEARCH BAR
-          // =====================================================
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 22, 20, 0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.darkPlum.withValues(alpha: 0.05),
-                      blurRadius: 15,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                    });
-                  },
-                  style: const TextStyle(
-                    color: AppTheme.darkPlum,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Cari mochi favoritmu...',
-                    hintStyle: TextStyle(
-                      color: AppTheme.darkPlum.withValues(alpha: 0.45),
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search_rounded,
-                      color: AppTheme.dustyRoseDark,
-                    ),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            onPressed: () {
-                              _searchController.clear();
-
-                              setState(() {
-                                _searchQuery = '';
-                              });
-                            },
-                            icon: const Icon(
-                              Icons.close_rounded,
-                              color: AppTheme.darkPlum,
-                            ),
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: AppTheme.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: const BorderSide(
-                        color: AppTheme.dustyRoseDark,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // =====================================================
-          // PROMO BANNER
-          // =====================================================
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-              child: Container(
-                height: 145,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppTheme.darkPlum, AppTheme.dustyRoseDark],
-                  ),
-                  borderRadius: BorderRadius.circular(26),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.darkPlum.withValues(alpha: 0.15),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.white.withValues(alpha: 0.18),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Text(
-                              'MOCHIÉ SPECIAL',
-                              style: TextStyle(
-                                color: AppTheme.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 9),
-
-                          const Text(
-                            'Sweet moments,\none bite away ✨',
-                            style: TextStyle(
-                              color: AppTheme.white,
-                              fontSize: 18,
-                              height: 1.2,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: const BoxDecoration(
-                        color: AppTheme.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.icecream_outlined,
-                        size: 42,
-                        color: AppTheme.dustyRoseDark,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // =====================================================
-          // PILIHAN RASA + JUMLAH + FILTER
-          // =====================================================
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
-              child: Row(
-                children: [
-                  const Text(
-                    'Pilihan Rasa',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.darkPlum,
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  Text(
-                    '${_filters.length - 1} rasa',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.darkPlum.withValues(alpha: 0.6),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // =====================================================
-          // HORIZONTAL PILIHAN RASA
-          // =====================================================
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 46,
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                scrollDirection: Axis.horizontal,
-                itemCount: _filters.length,
-                itemBuilder: (context, index) {
-                  final filter = _filters[index];
-
-                  final isSelected = _selectedFilter == filter;
-
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(filter),
-                      selected: isSelected,
-                      onSelected: (_) {
-                        setState(() {
-                          _selectedFilter = filter;
-                        });
-                      },
-                      labelStyle: TextStyle(
-                        color: isSelected ? AppTheme.white : AppTheme.darkPlum,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                      ),
-                      backgroundColor: AppTheme.white,
-                      selectedColor: AppTheme.darkPlum,
-                      side: BorderSide(
-                        color: isSelected
-                            ? AppTheme.darkPlum
-                            : AppTheme.softPink,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      showCheckmark: false,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-
-          // =====================================================
-          // VARIAN MOCHI + SORT
-          // =====================================================
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 25, 20, 14),
-              child: Row(
-                children: [
-                  const Text(
-                    'Varian Mochi',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.darkPlum,
-                    ),
-                  ),
-
-                  const SizedBox(width: 8),
-
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.dustyRoseDark,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  PopupMenuButton<String>(
-                    initialValue: _selectedSort,
-                    onSelected: (value) {
-                      setState(() {
-                        _selectedSort = value;
-                      });
-                    },
-                    color: AppTheme.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    itemBuilder: (context) {
-                      return [
-                        const PopupMenuItem<String>(
-                          value: 'Default',
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.grid_view_rounded,
-                                size: 19,
-                                color: AppTheme.darkPlum,
-                              ),
-                              SizedBox(width: 10),
-                              Text(
-                                'Default',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const PopupMenuItem<String>(
-                          value: 'Rating tertinggi',
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.star_rounded,
-                                size: 19,
-                                color: AppTheme.dustyRoseDark,
-                              ),
-                              SizedBox(width: 10),
-                              Text(
-                                'Rating tertinggi',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const PopupMenuItem<String>(
-                          value: 'Harga termahal',
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.arrow_upward_rounded,
-                                size: 19,
-                                color: AppTheme.darkPlum,
-                              ),
-                              SizedBox(width: 10),
-                              Text(
-                                'Harga termahal',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const PopupMenuItem<String>(
-                          value: 'Harga termurah',
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.arrow_downward_rounded,
-                                size: 19,
-                                color: AppTheme.darkPlum,
-                              ),
-                              SizedBox(width: 10),
-                              Text(
-                                'Harga termurah',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ];
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _selectedSort == 'Default'
-                            ? AppTheme.white
-                            : AppTheme.softPink,
-                        borderRadius: BorderRadius.circular(13),
-                        border: Border.all(
-                          color: _selectedSort == 'Default'
-                              ? AppTheme.softPink
-                              : AppTheme.dustyRoseDark,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.tune_rounded,
-                            size: 17,
-                            color: AppTheme.darkPlum,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            _sortLabel(),
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.darkPlum,
-                            ),
-                          ),
-                          const SizedBox(width: 3),
-                          const Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            size: 17,
-                            color: AppTheme.darkPlum,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // =====================================================
-          // ACTIVE FILTER INDICATOR
-          // =====================================================
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-              child: Row(
-                children: [
-                  if (_selectedFilter != 'Semua')
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.softPink,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.local_offer_outlined,
-                            size: 14,
-                            color: AppTheme.darkPlum,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            _selectedFilter,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.darkPlum,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (_selectedSort != 'Default') ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.softPink,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        _sortLabel(),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.darkPlum,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-
-          // =====================================================
-          // PRODUCT LIST
-          // =====================================================
-          if (_filteredMochi.isEmpty)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(40),
-                child: Column(
-                  children: [
-                    const Icon(
-                      Icons.search_off_rounded,
-                      size: 58,
-                      color: AppTheme.dustyRoseDark,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    const Text(
-                      'Mochi tidak ditemukan',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.darkPlum,
-                      ),
-                    ),
-
-                    const SizedBox(height: 6),
-
-                    Text(
-                      'Coba gunakan kata kunci atau filter lain.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AppTheme.darkPlum.withValues(alpha: 0.65),
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    TextButton(
-                      onPressed: () {
-                        _searchController.clear();
-
-                        setState(() {
-                          _searchQuery = '';
-                          _selectedFilter = 'Semua';
-                          _selectedSort = 'Default';
-                        });
-                      },
-                      child: const Text(
-                        'RESET PENCARIAN',
-                        style: TextStyle(
-                          color: AppTheme.darkPlum,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
+          if (mochiList.isEmpty)
+            SliverToBoxAdapter(child: _buildEmptyResult())
           else
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
-                  final mochi = _filteredMochi[index];
+                  final mochi = mochiList[index];
 
                   return AnimatedMochiCard(
                     index: index,
                     child: Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.only(bottom: 12),
                       child: _buildPolishedCard(context, mochi),
                     ),
                   );
-                }, childCount: _filteredMochi.length),
+                }, childCount: mochiList.length),
               ),
             ),
         ],
@@ -846,9 +646,90 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildPolishedCard(BuildContext context, Mochi mochi) {
-    final rating = mochi.rating;
+  Widget _buildEmptyResult() {
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        children: [
+          Container(
+            width: 90,
+            height: 90,
+            decoration: const BoxDecoration(
+              color: AppTheme.softPink,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.search_off_rounded,
+              size: 44,
+              color: AppTheme.primary,
+            ),
+          ),
 
+          const SizedBox(height: 16),
+
+          Text('Mochi tidak ditemukan', style: _displayStyle(20)),
+
+          const SizedBox(height: 6),
+
+          Text(
+            'Coba gunakan kata kunci atau filter lain.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppTheme.cocoa.withValues(alpha: 0.75)),
+          ),
+
+          const SizedBox(height: 18),
+
+          TextButton(
+            onPressed: () {
+              _searchController.clear();
+
+              setState(() {
+                _searchQuery = '';
+                _selectedFilter = 'Semua';
+                _selectedSort = 'Default';
+              });
+            },
+            child: const Text('RESET PENCARIAN'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ===========================================================
+  // KARTU PRODUK
+  // ===========================================================
+
+  void _openDetail(BuildContext context, Mochi mochi) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            MochiDetailPage(mochi: mochi),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(0.0, 0.08);
+          const end = Offset.zero;
+
+          final slideAnimation = Tween<Offset>(begin: begin, end: end).animate(
+            CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+          );
+
+          final fadeAnimation = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOut,
+          );
+
+          return FadeTransition(
+            opacity: fadeAnimation,
+            child: SlideTransition(position: slideAnimation, child: child),
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 400),
+      ),
+    );
+  }
+
+  Widget _buildPolishedCard(BuildContext context, Mochi mochi) {
     final isFavorite = AppData.isFavorite(mochi.name);
 
     return Container(
@@ -857,7 +738,7 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.darkPlum.withValues(alpha: 0.06),
+            color: AppTheme.cocoa.withValues(alpha: 0.07),
             blurRadius: 18,
             offset: const Offset(0, 7),
           ),
@@ -868,61 +749,25 @@ class _HomePageState extends State<HomePage> {
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
           onTap: () {
-            Navigator.push(
-              context,
-              PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) =>
-                    MochiDetailPage(mochi: mochi),
-                transitionsBuilder:
-                    (context, animation, secondaryAnimation, child) {
-                      const begin = Offset(0.0, 0.08);
-                      const end = Offset.zero;
-
-                      final slideAnimation =
-                          Tween<Offset>(begin: begin, end: end).animate(
-                            CurvedAnimation(
-                              parent: animation,
-                              curve: Curves.easeOutCubic,
-                            ),
-                          );
-
-                      final fadeAnimation = CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOut,
-                      );
-
-                      return FadeTransition(
-                        opacity: fadeAnimation,
-                        child: SlideTransition(
-                          position: slideAnimation,
-                          child: child,
-                        ),
-                      );
-                    },
-                transitionDuration: const Duration(milliseconds: 400),
-              ),
-            );
+            _openDetail(context, mochi);
           },
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             child: Row(
               children: [
-                // IMAGE
+                // GAMBAR + FAVORIT
                 Stack(
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Image.asset(
-                        mochi.image,
-                        width: 125,
-                        height: 145,
-                        fit: BoxFit.cover,
-                      ),
+                    MochiImage(
+                      path: mochi.image,
+                      width: 104,
+                      height: 128,
+                      borderRadius: 18,
                     ),
 
                     Positioned(
-                      top: 12,
-                      right: 12,
+                      top: 6,
+                      right: 6,
                       child: AnimatedFavoriteButton(
                         isFavorite: isFavorite,
                         onPressed: () {
@@ -934,9 +779,9 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
 
-                const SizedBox(width: 15),
+                const SizedBox(width: 12),
 
-                // CONTENT
+                // KONTEN
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -945,14 +790,10 @@ class _HomePageState extends State<HomePage> {
                         mochi.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w900,
-                          color: AppTheme.darkPlum,
-                        ),
+                        style: _displayStyle(16),
                       ),
 
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 2),
 
                       Text(
                         mochi.description,
@@ -960,38 +801,39 @@ class _HomePageState extends State<HomePage> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 12,
-                          height: 1.4,
-                          color: AppTheme.darkPlum.withValues(alpha: 0.65),
+                          height: 1.35,
+                          color: AppTheme.cocoa.withValues(alpha: 0.8),
                         ),
                       ),
 
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
 
                       Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
-                              vertical: 5,
+                              vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: AppTheme.softPink,
-                              borderRadius: BorderRadius.circular(10),
+                              color: AppTheme.yellow,
+                              borderRadius: BorderRadius.circular(9),
                             ),
                             child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 const Icon(
                                   Icons.star_rounded,
-                                  size: 15,
-                                  color: AppTheme.dustyRoseDark,
+                                  size: 13,
+                                  color: AppTheme.cocoa,
                                 ),
                                 const SizedBox(width: 3),
                                 Text(
-                                  rating.toString(),
+                                  mochi.rating.toString(),
                                   style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w800,
-                                    color: AppTheme.darkPlum,
+                                    color: AppTheme.cocoa,
                                   ),
                                 ),
                               ],
@@ -1002,22 +844,21 @@ class _HomePageState extends State<HomePage> {
 
                           Text(
                             mochi.price,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w900,
-                              color: AppTheme.darkPlum,
+                            style: _displayStyle(
+                              16,
+                              color: AppTheme.primaryDeep,
                             ),
                           ),
                         ],
                       ),
 
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
 
                       Row(
                         children: [
                           Expanded(
                             child: SizedBox(
-                              height: 38,
+                              height: 36,
                               child: ElevatedButton(
                                 onPressed: () {
                                   Navigator.push(
@@ -1030,8 +871,9 @@ class _HomePageState extends State<HomePage> {
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.softPink,
-                                  foregroundColor: AppTheme.darkPlum,
+                                  foregroundColor: AppTheme.cocoa,
                                   elevation: 0,
+                                  minimumSize: Size.zero,
                                   padding: EdgeInsets.zero,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -1040,7 +882,7 @@ class _HomePageState extends State<HomePage> {
                                 child: const Text(
                                   'DETAIL',
                                   style: TextStyle(
-                                    fontSize: 11,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
@@ -1050,44 +892,31 @@ class _HomePageState extends State<HomePage> {
 
                           const SizedBox(width: 8),
 
-                          Expanded(
-                            child: SizedBox(
-                              height: 38,
-                              child: AnimatedCartButton(
-                                onPressed: () {
-                                  AppData.addToCart(mochi.toMap());
+                          SizedBox(
+                            width: 52,
+                            height: 36,
+                            child: AnimatedCartButton(
+                              onPressed: () {
+                                AppData.addToCart(mochi.toMap());
 
-                                  ScaffoldMessenger.of(context)
-                                      .hideCurrentSnackBar();
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        '${mochi.name} ditambahkan ke cart',
-                                      ),
-                                      behavior: SnackBarBehavior.floating,
-                                      backgroundColor: AppTheme.darkPlum,
-                                      margin: const EdgeInsets.all(16),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      duration: const Duration(seconds: 2),
-                                    ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.darkPlum,
-                                  foregroundColor: AppTheme.white,
-                                  elevation: 0,
-                                  padding: EdgeInsets.zero,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
+                                AppSnackBar.success(
+                                  context,
+                                  '${mochi.name} ditambahkan ke cart',
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primary,
+                                foregroundColor: AppTheme.white,
+                                elevation: 0,
+                                minimumSize: Size.zero,
+                                padding: EdgeInsets.zero,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: const Icon(
-                                  Icons.shopping_bag_outlined,
-                                  size: 18,
-                                ),
+                              ),
+                              child: const Icon(
+                                Icons.shopping_bag_outlined,
+                                size: 18,
                               ),
                             ),
                           ),
@@ -1104,12 +933,16 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // ===========================================================
+  // BUILD
+  // ===========================================================
+
   @override
   Widget build(BuildContext context) {
     final pages = [
       _buildHomeContent(),
-      const FavoritePage(),
-      const AboutPage(),
+      FavoritePage(onExplore: () => _onNavigationTap(0)),
+      ProfilePage(onSelectTab: _onNavigationTap),
     ];
 
     return Scaffold(
@@ -1119,44 +952,103 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: ValueListenableBuilder<List<Map<String, dynamic>>>(
         valueListenable: AppData.favorites,
         builder: (context, favorites, child) {
-          return NavigationBar(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: _onNavigationTap,
-            backgroundColor: AppTheme.white,
-            indicatorColor: AppTheme.dustyRose,
-            destinations: [
-              const NavigationDestination(
-                icon: Icon(Icons.home_outlined),
-                selectedIcon: Icon(Icons.home_rounded),
-                label: 'Home',
+          return Container(
+            decoration: BoxDecoration(
+              color: AppTheme.white,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
               ),
-
-              NavigationDestination(
-                icon: Badge(
-                  isLabelVisible: favorites.isNotEmpty,
-                  label: Text(favorites.length.toString()),
-                  child: const Icon(Icons.favorite_border_rounded),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.cocoa.withValues(alpha: 0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, -6),
                 ),
-                selectedIcon: Badge(
-                  isLabelVisible: favorites.isNotEmpty,
-                  label: Text(favorites.length.toString()),
-                  child: const Icon(Icons.favorite_rounded),
-                ),
-                label: 'Favorite',
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
               ),
+              child: NavigationBar(
+                selectedIndex: _selectedIndex,
+                onDestinationSelected: _onNavigationTap,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                destinations: [
+                  const NavigationDestination(
+                    icon: Icon(Icons.home_outlined),
+                    selectedIcon: Icon(Icons.home_rounded),
+                    label: 'Home',
+                  ),
 
-              const NavigationDestination(
-                icon: Icon(Icons.person_outline_rounded),
-                selectedIcon: Icon(Icons.person_rounded),
-                label: 'About',
+                  NavigationDestination(
+                    icon: Badge(
+                      isLabelVisible: favorites.isNotEmpty,
+                      label: Text(favorites.length.toString()),
+                      child: const Icon(Icons.favorite_border_rounded),
+                    ),
+                    selectedIcon: Badge(
+                      isLabelVisible: favorites.isNotEmpty,
+                      label: Text(favorites.length.toString()),
+                      child: const Icon(Icons.favorite_rounded),
+                    ),
+                    label: 'Favorite',
+                  ),
+
+                  const NavigationDestination(
+                    icon: Icon(Icons.person_outline_rounded),
+                    selectedIcon: Icon(Icons.person_rounded),
+                    label: 'Profile',
+                  ),
+                ],
               ),
-            ],
+            ),
           );
         },
       ),
     );
   }
 }
+
+// =============================================================
+// BOLA MOCHI DEKORATIF (untuk banner)
+// =============================================================
+
+class _MochiBall extends StatelessWidget {
+  final double size;
+  final Color color;
+
+  const _MochiBall({required this.size, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          center: const Alignment(-0.3, -0.4),
+          radius: 0.9,
+          colors: [AppTheme.white, color],
+          stops: const [0.0, 0.72],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.cocoa.withValues(alpha: 0.15),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================
+// ANIMASI KARTU, FAVORIT, DAN TOMBOL CART
+// =============================================================
 
 class AnimatedMochiCard extends StatefulWidget {
   final Widget child;
@@ -1261,9 +1153,9 @@ class _AnimatedFavoriteButtonState extends State<AnimatedFavoriteButton> {
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOutBack,
         child: Container(
-          padding: const EdgeInsets.all(9),
+          padding: const EdgeInsets.all(7),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.92),
+            color: Colors.white.withValues(alpha: 0.95),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
@@ -1275,10 +1167,8 @@ class _AnimatedFavoriteButtonState extends State<AnimatedFavoriteButton> {
           ),
           child: Icon(
             widget.isFavorite ? Icons.favorite : Icons.favorite_border,
-            color: widget.isFavorite
-                ? AppTheme.dustyRoseDark
-                : AppTheme.darkPlum,
-            size: 20,
+            color: AppTheme.primaryDeep,
+            size: 18,
           ),
         ),
       ),

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../app_data.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_snackbar.dart';
+import '../widgets/gradient_button.dart';
+import '../widgets/mochi_image.dart';
 
 class OrderHistoryPage extends StatefulWidget {
   final bool showSuccessMessage;
@@ -24,6 +27,14 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     'Pesanan selesai',
   ];
 
+  // Label singkat untuk stepper.
+  final List<String> _shortLabels = [
+    'Dibuat',
+    'Diproses',
+    'Dikirim',
+    'Selesai',
+  ];
+
   // ===========================================================
   // SUCCESS MESSAGE
   // ===========================================================
@@ -34,29 +45,9 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
 
     if (widget.showSuccessMessage) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
-              children: [
-                Icon(Icons.check_circle_outline, color: AppTheme.white),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Pesanan berhasil dibuat! 🎉',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: AppTheme.darkPlum,
-            margin: const EdgeInsets.all(16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        if (!mounted) return;
+
+        AppSnackBar.success(context, 'Pesanan berhasil dibuat! 🎉');
       });
     }
   }
@@ -84,23 +75,40 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
   }
 
   // ===========================================================
-  // FORMAT DATE
+  // FORMAT TANGGAL
+  // Memakai order['date'] jika ada. Jika tidak, tanggal dibaca dari
+  // orderId (format MOCHI-<waktu dalam milidetik>).
   // ===========================================================
 
-  String _formatDate(dynamic dateValue) {
-    if (dateValue is! DateTime) {
+  String _formatDate(Map<String, dynamic> order) {
+    DateTime? date;
+
+    final dateValue = order['date'];
+
+    if (dateValue is DateTime) {
+      date = dateValue;
+    } else {
+      final match = RegExp(r'(\d{10,})')
+          .firstMatch(order['orderId']?.toString() ?? '');
+
+      if (match != null) {
+        final millis = int.tryParse(match.group(1)!);
+
+        if (millis != null) {
+          date = DateTime.fromMillisecondsSinceEpoch(millis);
+        }
+      }
+    }
+
+    if (date == null) {
       return '-';
     }
 
-    final day = dateValue.day.toString().padLeft(2, '0');
-
-    final month = dateValue.month.toString().padLeft(2, '0');
-
-    final year = dateValue.year.toString();
-
-    final hour = dateValue.hour.toString().padLeft(2, '0');
-
-    final minute = dateValue.minute.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year.toString();
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
 
     return '$day/$month/$year • $hour:$minute';
   }
@@ -120,7 +128,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
   }
 
   // ===========================================================
-  // STATUS INDEX
+  // STATUS
   // ===========================================================
 
   int _getStatusIndex(String status) {
@@ -133,39 +141,12 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     return index;
   }
 
-  // ===========================================================
-  // STATUS BACKGROUND
-  // ===========================================================
-
   Color _statusBackground(String status) {
     if (status == 'Pesanan selesai') {
-      return AppTheme.dustyRose;
+      return AppTheme.mint;
     }
 
-    return AppTheme.softPink;
-  }
-
-  // ===========================================================
-  // STATUS ICON
-  // ===========================================================
-
-  IconData _getStatusIcon(String status) {
-    switch (status) {
-      case 'Pesanan dibuat':
-        return Icons.receipt_long_outlined;
-
-      case 'Sedang diproses':
-        return Icons.settings_outlined;
-
-      case 'Sedang dikirim':
-        return Icons.local_shipping_outlined;
-
-      case 'Pesanan selesai':
-        return Icons.check_circle_outline;
-
-      default:
-        return Icons.receipt_long_outlined;
-    }
+    return AppTheme.yellow;
   }
 
   // ===========================================================
@@ -185,31 +166,11 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
 
     AppData.updateOrderStatus(orderIndex, nextStatus);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle_outline, color: AppTheme.white),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Status diperbarui menjadi "$nextStatus"',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
-        ),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppTheme.darkPlum,
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    AppSnackBar.success(context, 'Status diperbarui menjadi "$nextStatus"');
   }
 
   // ===========================================================
-  // ORDER ITEM
+  // ITEM PESANAN
   // ===========================================================
 
   Widget _orderItem(Map<String, dynamic> item) {
@@ -222,44 +183,18 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     final image = item['image']?.toString() ?? '';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(10),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: AppTheme.cream,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          // =====================================================
-          // IMAGE
-          // =====================================================
+          MochiImage(path: image, width: 48, height: 48, borderRadius: 12),
 
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.asset(
-              image,
-              width: 58,
-              height: 58,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: 58,
-                  height: 58,
-                  color: AppTheme.softPink,
-                  child: const Icon(
-                    Icons.image_not_supported_outlined,
-                    color: AppTheme.dustyRoseDark,
-                  ),
-                );
-              },
-            ),
-          ),
+          const SizedBox(width: 10),
 
-          const SizedBox(width: 12),
-
-          // =====================================================
-          // NAME
-          // =====================================================
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,18 +205,17 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.darkPlum,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.cocoa,
                   ),
                 ),
-
-                const SizedBox(height: 4),
 
                 Text(
                   '$price × $quantity',
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppTheme.darkPlum.withValues(alpha: 0.55),
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.cocoa.withValues(alpha: 0.8),
                   ),
                 ),
               ],
@@ -293,26 +227,27 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
   }
 
   // ===========================================================
-  // DETAIL ROW
+  // BARIS DETAIL
   // ===========================================================
 
   Widget _detailRow(IconData icon, String title, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 19, color: AppTheme.dustyRoseDark),
+          Icon(icon, size: 18, color: AppTheme.primaryDeep),
 
           const SizedBox(width: 10),
 
           SizedBox(
-            width: 90,
+            width: 84,
             child: Text(
               title,
               style: TextStyle(
                 fontSize: 12,
-                color: AppTheme.darkPlum.withValues(alpha: 0.55),
+                fontWeight: FontWeight.w700,
+                color: AppTheme.cocoa.withValues(alpha: 0.8),
               ),
             ),
           ),
@@ -322,8 +257,8 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
               value,
               style: const TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.darkPlum,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.cocoa,
               ),
             ),
           ),
@@ -333,7 +268,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
   }
 
   // ===========================================================
-  // STATUS TIMELINE
+  // STEPPER STATUS
   // ===========================================================
 
   Widget _statusTimeline(String currentStatus) {
@@ -341,7 +276,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppTheme.cream,
         borderRadius: BorderRadius.circular(18),
@@ -352,131 +287,63 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
           const Text(
             'Status Pesanan',
             style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.darkPlum,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.cocoa,
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
 
-          ...List.generate(orderStatuses.length, (index) {
-            final isCompleted = index <= currentIndex;
+          Row(
+            children: List.generate(orderStatuses.length, (index) {
+              final isDone = index <= currentIndex;
 
-            final isCurrent = index == currentIndex;
-
-            final isLast = index == orderStatuses.length - 1;
-
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // =================================================
-                // TIMELINE LEFT
-                // =================================================
-
-                SizedBox(
-                  width: 28,
-                  child: Column(
-                    children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: isCurrent ? 24 : 20,
-                        height: isCurrent ? 24 : 20,
-                        decoration: BoxDecoration(
-                          color: isCompleted
-                              ? AppTheme.dustyRoseDark
-                              : AppTheme.softPink,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isCompleted
-                                ? AppTheme.dustyRoseDark
-                                : AppTheme.dustyRose,
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Icon(
-                          isCompleted ? Icons.check : Icons.circle,
-                          size: isCurrent ? 14 : 7,
-                          color: isCompleted
-                              ? AppTheme.white
-                              : AppTheme.dustyRoseDark,
-                        ),
+              return Expanded(
+                child: Column(
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        color: isDone ? AppTheme.mint : AppTheme.softPink,
+                        shape: BoxShape.circle,
                       ),
-
-                      if (!isLast)
-                        Container(
-                          width: 2,
-                          height: 34,
-                          color: index < currentIndex
-                              ? AppTheme.dustyRoseDark
-                              : AppTheme.dustyRose,
-                        ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(width: 10),
-
-                // =================================================
-                // STATUS TEXT
-                // =================================================
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 1),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          orderStatuses[index],
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: isCurrent || isCompleted
-                                ? FontWeight.bold
-                                : FontWeight.w500,
-                            color: isCompleted
-                                ? AppTheme.darkPlum
-                                : AppTheme.darkPlum.withValues(alpha: 0.40),
-                          ),
-                        ),
-
-                        if (isCurrent)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 3, bottom: 14),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _getStatusIcon(orderStatuses[index]),
-                                  size: 13,
-                                  color: AppTheme.dustyRoseDark,
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  'Status saat ini',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: AppTheme.dustyRoseDark,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        else
-                          const SizedBox(height: 14),
-                      ],
+                      child: isDone
+                          ? const Icon(
+                              Icons.check_rounded,
+                              size: 16,
+                              color: AppTheme.cocoa,
+                            )
+                          : null,
                     ),
-                  ),
+
+                    const SizedBox(height: 4),
+
+                    Text(
+                      _shortLabels[index],
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800,
+                        color: isDone
+                            ? AppTheme.cocoa
+                            : AppTheme.cocoa.withValues(alpha: 0.65),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            );
-          }),
+              );
+            }),
+          ),
         ],
       ),
     );
   }
 
   // ===========================================================
-  // ORDER CARD
+  // KARTU PESANAN
   // ===========================================================
 
   Widget _orderCard(Map<String, dynamic> order, int orderIndex) {
@@ -504,23 +371,19 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
 
     final total = order['total'] ?? 0;
 
-    final date = order['date'];
-
     final totalQuantity = _getTotalQuantity(items);
 
-    final currentStatusIndex = _getStatusIndex(status);
-
-    final isFinished = currentStatusIndex == orderStatuses.length - 1;
+    final isFinished = _getStatusIndex(status) == orderStatuses.length - 1;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 18),
-      padding: const EdgeInsets.all(18),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.dustyRoseDark.withValues(alpha: 0.10),
+            color: AppTheme.cocoa.withValues(alpha: 0.07),
             blurRadius: 18,
             offset: const Offset(0, 7),
           ),
@@ -529,10 +392,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // =====================================================
-          // HEADER ORDER
-          // =====================================================
-
+          // HEADER
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -543,19 +403,19 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                     const Text(
                       'Pesanan Mochi',
                       style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.darkPlum,
+                        fontFamily: AppTheme.fontDisplay,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.cocoa,
                       ),
                     ),
 
-                    const SizedBox(height: 5),
-
                     Text(
-                      _formatDate(date),
+                      '${_formatDate(order)} • $totalQuantity item',
                       style: TextStyle(
-                        fontSize: 11,
-                        color: AppTheme.darkPlum.withValues(alpha: 0.50),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.cocoa.withValues(alpha: 0.8),
                       ),
                     ),
                   ],
@@ -569,145 +429,87 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                 ),
                 decoration: BoxDecoration(
                   color: _statusBackground(status),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isFinished
-                          ? Icons.check_circle_outline
-                          : Icons.radio_button_checked,
-                      size: 14,
-                      color: AppTheme.darkPlum,
-                    ),
-
-                    const SizedBox(width: 5),
-
-                    Text(
-                      status,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.darkPlum,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  status,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.cocoa,
+                  ),
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 18),
-
-          // =====================================================
-          // ITEM COUNT
-          // =====================================================
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-            decoration: BoxDecoration(
-              color: AppTheme.cream,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.shopping_bag_outlined,
-                  size: 18,
-                  color: AppTheme.dustyRoseDark,
-                ),
-
-                const SizedBox(width: 8),
-
-                Text(
-                  '$totalQuantity item',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.darkPlum,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
           const SizedBox(height: 12),
 
-          // =====================================================
-          // ITEMS
-          // =====================================================
-          if (items.isNotEmpty) ...items.map((item) => _orderItem(item)),
+          // ITEM
+          ...items.map((item) => _orderItem(item)),
 
           const SizedBox(height: 6),
 
-          const Divider(color: AppTheme.softPink, height: 20),
-
-          // =====================================================
-          // STATUS TIMELINE
-          // =====================================================
+          // STATUS
           _statusTimeline(status),
-
-          const SizedBox(height: 14),
-
-          // =====================================================
-          // UPDATE STATUS BUTTON
-          // =====================================================
-          SizedBox(
-            width: double.infinity,
-            height: 46,
-            child: ElevatedButton.icon(
-              onPressed: isFinished
-                  ? null
-                  : () {
-                      _updateStatus(orderIndex, order);
-                    },
-              icon: Icon(
-                isFinished ? Icons.check_circle_outline : Icons.sync_rounded,
-                size: 19,
-              ),
-              label: Text(
-                isFinished ? 'PESANAN SELESAI' : 'UPDATE STATUS',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.3,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isFinished
-                    ? AppTheme.dustyRose
-                    : AppTheme.darkPlum,
-                disabledBackgroundColor: AppTheme.dustyRose,
-                foregroundColor: isFinished
-                    ? AppTheme.darkPlum
-                    : AppTheme.white,
-                disabledForegroundColor: AppTheme.darkPlum,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-            ),
-          ),
 
           const SizedBox(height: 12),
 
-          const Divider(color: AppTheme.softPink, height: 20),
+          // UPDATE STATUS
+          SizedBox(
+            width: double.infinity,
+            child: isFinished
+                ? Container(
+                    height: 46,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppTheme.mintSoft,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.check_circle_outline,
+                          size: 20,
+                          color: AppTheme.cocoa,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'PESANAN SELESAI',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.cocoa,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : GradientButton(
+                    label: 'UPDATE STATUS',
+                    height: 46,
+                    fontSize: 13,
+                    onPressed: () {
+                      _updateStatus(orderIndex, order);
+                    },
+                  ),
+          ),
 
-          // =====================================================
-          // CUSTOMER DETAIL
-          // =====================================================
+          const SizedBox(height: 16),
+
+          // DETAIL PENGIRIMAN
           const Text(
             'Detail Pengiriman',
             style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.darkPlum,
+              fontFamily: AppTheme.fontDisplay,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.cocoa,
             ),
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
 
           _detailRow(Icons.person_outline, 'Nama', customerName),
 
@@ -721,20 +523,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
 
           const Divider(color: AppTheme.softPink, height: 20),
 
-          // =====================================================
-          // PAYMENT SUMMARY
-          // =====================================================
-          const Text(
-            'Ringkasan Pembayaran',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.darkPlum,
-            ),
-          ),
-
-          const SizedBox(height: 14),
-
+          // RINGKASAN PEMBAYARAN
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -742,17 +531,22 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                 'Subtotal',
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppTheme.darkPlum.withValues(alpha: 0.55),
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.cocoa.withValues(alpha: 0.8),
                 ),
               ),
               Text(
                 _formatRupiah(subtotal),
-                style: const TextStyle(fontSize: 12, color: AppTheme.darkPlum),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.cocoa,
+                ),
               ),
             ],
           ),
 
-          const SizedBox(height: 9),
+          const SizedBox(height: 8),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -761,12 +555,17 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                 'Pengiriman',
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppTheme.darkPlum.withValues(alpha: 0.55),
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.cocoa.withValues(alpha: 0.8),
                 ),
               ),
               Text(
                 _formatRupiah(shippingCost),
-                style: const TextStyle(fontSize: 12, color: AppTheme.darkPlum),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.cocoa,
+                ),
               ),
             ],
           ),
@@ -774,7 +573,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
           const SizedBox(height: 12),
 
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: AppTheme.dustyRose,
               borderRadius: BorderRadius.circular(16),
@@ -786,16 +585,17 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                   'Total',
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.darkPlum,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.cocoa,
                   ),
                 ),
                 Text(
                   _formatRupiah(total),
                   style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.darkPlum,
+                    fontFamily: AppTheme.fontDisplay,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.cocoa,
                   ),
                 ),
               ],
@@ -807,7 +607,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
   }
 
   // ===========================================================
-  // EMPTY STATE
+  // KOSONG
   // ===========================================================
 
   Widget _emptyState() {
@@ -824,8 +624,10 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                 color: AppTheme.softPink,
                 shape: BoxShape.circle,
               ),
-              child: const Center(
-                child: Text('🧾', style: TextStyle(fontSize: 45)),
+              child: const Icon(
+                Icons.receipt_long_outlined,
+                size: 46,
+                color: AppTheme.primary,
               ),
             ),
 
@@ -834,9 +636,10 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
             const Text(
               'Belum Ada Pesanan',
               style: TextStyle(
+                fontFamily: AppTheme.fontDisplay,
                 fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.darkPlum,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.cocoa,
               ),
             ),
 
@@ -847,7 +650,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                color: AppTheme.darkPlum.withValues(alpha: 0.55),
+                color: AppTheme.cocoa.withValues(alpha: 0.8),
               ),
             ),
           ],
@@ -865,12 +668,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     return Scaffold(
       backgroundColor: AppTheme.cream,
 
-      appBar: AppBar(
-        title: const Text(
-          'Order History',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-      ),
+      appBar: AppBar(title: const Text('Order History')),
 
       body: ValueListenableBuilder<List<Map<String, dynamic>>>(
         valueListenable: AppData.orderHistory,
@@ -881,7 +679,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
 
           return ListView.builder(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
             itemCount: orders.length,
             itemBuilder: (context, index) {
               final order = orders[index];

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../app_data.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_snackbar.dart';
+import '../widgets/gradient_button.dart';
 import 'order_history_page.dart';
 
 class CheckoutPage extends StatefulWidget {
@@ -22,20 +24,21 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   final TextEditingController _addressController = TextEditingController();
 
+  // Pesan error yang tampil di bawah field.
+  String? _nameError;
+  String? _phoneError;
+  String? _addressError;
+
   // =========================================================
-  // PILIHAN PENGIRIMAN
+  // PILIHAN PENGIRIMAN & PEMBAYARAN
   // =========================================================
 
   String _selectedShipping = 'Reguler';
 
-  // =========================================================
-  // PILIHAN PEMBAYARAN
-  // =========================================================
-
   String _selectedPayment = 'COD';
 
   // =========================================================
-  // ONGKIR
+  // ONGKIR, SUBTOTAL, TOTAL
   // =========================================================
 
   double get _shippingCost {
@@ -46,17 +49,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return 8000;
   }
 
-  // =========================================================
-  // SUBTOTAL
-  // =========================================================
-
   double get _subtotal {
     return AppData.getCartTotal();
   }
-
-  // =========================================================
-  // TOTAL
-  // =========================================================
 
   double get _total {
     return _subtotal + _shippingCost;
@@ -87,21 +82,31 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   // =========================================================
-  // VALIDASI FORM
+  // VALIDASI FORM (aturan sama seperti sebelumnya)
   // =========================================================
 
   bool _validateForm() {
-    if (_nameController.text.trim().isEmpty) {
+    final nameEmpty = _nameController.text.trim().isEmpty;
+    final phoneEmpty = _phoneController.text.trim().isEmpty;
+    final addressEmpty = _addressController.text.trim().isEmpty;
+
+    setState(() {
+      _nameError = nameEmpty ? 'Nama belum diisi' : null;
+      _phoneError = phoneEmpty ? 'Nomor telepon belum diisi' : null;
+      _addressError = addressEmpty ? 'Alamat belum diisi' : null;
+    });
+
+    if (nameEmpty) {
       _showMessage('Nama belum diisi');
       return false;
     }
 
-    if (_phoneController.text.trim().isEmpty) {
+    if (phoneEmpty) {
       _showMessage('Nomor telepon belum diisi');
       return false;
     }
 
-    if (_addressController.text.trim().isEmpty) {
+    if (addressEmpty) {
       _showMessage('Alamat belum diisi');
       return false;
     }
@@ -114,22 +119,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return true;
   }
 
-  // =========================================================
-  // SNACKBAR
-  // =========================================================
-
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppTheme.darkPlum,
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-    );
+    AppSnackBar.error(context, message);
   }
 
   // =========================================================
@@ -146,13 +137,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
       barrierDismissible: false,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: AppTheme.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
-          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-          contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
-          actionsPadding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
           title: Row(
             children: [
               Container(
@@ -163,20 +147,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 ),
                 child: const Icon(
                   Icons.shopping_bag_outlined,
-                  color: AppTheme.dustyRoseDark,
+                  color: AppTheme.primaryDeep,
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Konfirmasi Pesanan',
-                  style: TextStyle(
-                    color: AppTheme.darkPlum,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 21,
-                  ),
-                ),
-              ),
+              const Expanded(child: Text('Konfirmasi Pesanan')),
             ],
           ),
           content: Column(
@@ -186,12 +161,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
               Text(
                 'Pesanan akan dibuat dengan detail:',
                 style: TextStyle(
-                  color: AppTheme.darkPlum.withValues(alpha: 0.60),
+                  color: AppTheme.cocoa.withValues(alpha: 0.75),
                   fontSize: 13,
                 ),
               ),
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 16),
 
               _confirmationRow('Nama', _nameController.text.trim()),
 
@@ -223,42 +198,21 @@ class _CheckoutPageState extends State<CheckoutPage> {
               },
               child: const Text(
                 'Batal',
-                style: TextStyle(color: AppTheme.darkPlum),
+                style: TextStyle(color: AppTheme.cocoa),
               ),
             ),
-
-            const SizedBox(width: 8),
 
             ElevatedButton(
               onPressed: () {
                 _createOrder(dialogContext);
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.darkPlum,
-                foregroundColor: AppTheme.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 22,
-                  vertical: 13,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: const Text(
-                'Konfirmasi',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+              child: const Text('Konfirmasi'),
             ),
           ],
         );
       },
     );
   }
-
-  // =========================================================
-  // ROW KONFIRMASI
-  // =========================================================
 
   Widget _confirmationRow(String title, String value, {bool bold = false}) {
     return Row(
@@ -269,7 +223,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           child: Text(
             title,
             style: TextStyle(
-              color: AppTheme.darkPlum.withValues(alpha: 0.55),
+              color: AppTheme.cocoa.withValues(alpha: 0.75),
               fontSize: 13,
             ),
           ),
@@ -278,9 +232,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
           child: Text(
             value,
             style: TextStyle(
-              color: AppTheme.darkPlum,
+              color: AppTheme.cocoa,
               fontSize: 13,
-              fontWeight: bold ? FontWeight.bold : FontWeight.w600,
+              fontWeight: bold ? FontWeight.w800 : FontWeight.w700,
             ),
           ),
         ),
@@ -289,14 +243,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   // =========================================================
-  // MEMBUAT ORDER
+  // MEMBUAT ORDER (urutan sama seperti sebelumnya)
   // =========================================================
 
   void _createOrder(BuildContext dialogContext) {
     // Buat ID unik untuk pesanan.
     final orderId = 'MOCHI-${DateTime.now().millisecondsSinceEpoch}';
 
-    // Pastikan semua data String tidak pernah null.
     final customerName = _nameController.text.trim().isEmpty
         ? 'Pelanggan'
         : _nameController.text.trim();
@@ -308,10 +261,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
     final address = _addressController.text.trim().isEmpty
         ? '-'
         : _addressController.text.trim();
-
-    // =======================================================
-    // DATA ORDER
-    // =======================================================
 
     final Map<String, dynamic> order = {
       'orderId': orderId,
@@ -326,111 +275,103 @@ class _CheckoutPageState extends State<CheckoutPage> {
       'status': 'Pesanan dibuat',
     };
 
-    // =======================================================
-    // SIMPAN ORDER
-    // =======================================================
+    // Messenger diambil sekarang karena halaman ini akan diganti.
+    final messenger = ScaffoldMessenger.of(context);
 
+    // SIMPAN ORDER (menyalin isi cart), LALU KOSONGKAN CART
     AppData.addOrder(order);
-
-    // =======================================================
-    // KOSONGKAN CART
-    // =======================================================
 
     AppData.clearCart();
 
-    // =======================================================
-    // TUTUP DIALOG
-    // =======================================================
-
     Navigator.pop(dialogContext);
-
-    // =======================================================
-    // PINDAH KE ORDER HISTORY
-    // =======================================================
 
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const OrderHistoryPage()),
     );
 
-    // =======================================================
-    // NOTIFIKASI
-    // =======================================================
-
     Future.delayed(const Duration(milliseconds: 400), () {
-      if (!mounted) return;
+      messenger.hideCurrentSnackBar();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Row(
             children: [
               Icon(Icons.check_circle_outline, color: AppTheme.white),
               SizedBox(width: 10),
               Expanded(child: Text('Pesanan berhasil dibuat! 🍡')),
             ],
           ),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppTheme.darkPlum,
-          margin: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          margin: EdgeInsets.all(16),
         ),
       );
     });
   }
 
   // =========================================================
-  // TEXT FIELD
+  // JUDUL SECTION
   // =========================================================
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required IconData icon,
-    TextInputType? keyboardType,
-    int maxLines = 1,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
+  Widget _sectionTitle(String text) {
+    return Text(
+      text,
       style: const TextStyle(
-        color: AppTheme.darkPlum,
-        fontWeight: FontWeight.w500,
-      ),
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        prefixIcon: Icon(icon, color: AppTheme.dustyRoseDark),
-        filled: true,
-        fillColor: AppTheme.white,
-        labelStyle: TextStyle(color: AppTheme.darkPlum.withValues(alpha: 0.60)),
-        hintStyle: TextStyle(color: AppTheme.darkPlum.withValues(alpha: 0.35)),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: BorderSide(
-            color: AppTheme.dustyRose.withValues(alpha: 0.45),
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(
-            color: AppTheme.dustyRoseDark,
-            width: 1.5,
-          ),
-        ),
+        fontFamily: AppTheme.fontDisplay,
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: AppTheme.cocoa,
       ),
     );
   }
 
   // =========================================================
-  // SHIPPING CARD
+  // FIELD (label di atas)
+  // =========================================================
+
+  Widget _buildField({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    String? errorText,
+    TextInputType? keyboardType,
+    int maxLines = 1,
+    ValueChanged<String>? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.cocoa,
+          ),
+        ),
+
+        const SizedBox(height: 6),
+
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          onChanged: onChanged,
+          style: const TextStyle(
+            color: AppTheme.cocoa,
+            fontWeight: FontWeight.w700,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            errorText: errorText,
+            fillColor: AppTheme.cream,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // =========================================================
+  // OPSI PENGIRIMAN
   // =========================================================
 
   Widget _buildShippingOption({
@@ -440,172 +381,127 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }) {
     final selected = _selectedShipping == title;
 
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedShipping = title;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: selected ? AppTheme.softPink : AppTheme.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: selected
-                ? AppTheme.dustyRoseDark
-                : AppTheme.dustyRose.withValues(alpha: 0.55),
-            width: selected ? 1.5 : 1,
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedShipping = title;
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: selected ? AppTheme.softPink : AppTheme.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: selected ? AppTheme.primary : AppTheme.dustyRose,
+              width: selected ? 2 : 1.5,
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: selected ? AppTheme.dustyRose : AppTheme.cream,
-                borderRadius: BorderRadius.circular(13),
-              ),
-              child: Icon(
-                title == 'Express'
-                    ? Icons.flash_on_outlined
-                    : Icons.local_shipping_outlined,
-                color: AppTheme.darkPlum,
-              ),
-            ),
-
-            const SizedBox(width: 14),
-
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: AppTheme.darkPlum,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: AppTheme.darkPlum.withValues(alpha: 0.55),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            Text(
-              _formatRupiah(price),
-              style: const TextStyle(
-                color: AppTheme.darkPlum,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(width: 8),
-
-            Icon(
-              selected ? Icons.radio_button_checked : Icons.radio_button_off,
-              color: selected
-                  ? AppTheme.dustyRoseDark
-                  : AppTheme.darkPlum.withValues(alpha: 0.30),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // =========================================================
-  // PAYMENT CARD
-  // =========================================================
-
-  Widget _buildPaymentOption({required String title, required IconData icon}) {
-    final selected = _selectedPayment == title;
-
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedPayment = title;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: selected ? AppTheme.softPink : AppTheme.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: selected
-                ? AppTheme.dustyRoseDark
-                : AppTheme.dustyRose.withValues(alpha: 0.55),
-            width: selected ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: selected ? AppTheme.dustyRose : AppTheme.cream,
-                borderRadius: BorderRadius.circular(13),
-              ),
-              child: Icon(icon, color: AppTheme.darkPlum),
-            ),
-
-            const SizedBox(width: 14),
-
-            Expanded(
-              child: Text(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
                 title,
                 style: const TextStyle(
-                  color: AppTheme.darkPlum,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.cocoa,
                 ),
               ),
-            ),
 
-            Icon(
-              selected ? Icons.radio_button_checked : Icons.radio_button_off,
-              color: selected
-                  ? AppTheme.dustyRoseDark
-                  : AppTheme.darkPlum.withValues(alpha: 0.30),
-            ),
-          ],
+              const SizedBox(height: 2),
+
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.cocoa.withValues(alpha: 0.8),
+                ),
+              ),
+
+              const SizedBox(height: 4),
+
+              Text(
+                _formatRupiah(price),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.primaryDeep,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   // =========================================================
-  // SUMMARY ROW
+  // OPSI PEMBAYARAN
   // =========================================================
 
-  Widget _summaryRow(String title, String value, {bool bold = false}) {
+  Widget _buildPaymentOption(String title) {
+    final selected = _selectedPayment == title;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedPayment = title;
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected ? AppTheme.primaryDeep : AppTheme.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: selected ? AppTheme.primaryDeep : AppTheme.dustyRose,
+              width: 1.5,
+            ),
+          ),
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: selected ? AppTheme.white : AppTheme.cocoa,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // =========================================================
+  // BARIS RINGKASAN
+  // =========================================================
+
+  Widget _summaryRow(String title, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           title,
-          style: TextStyle(
-            color: AppTheme.darkPlum.withValues(alpha: bold ? 1 : 0.60),
-            fontWeight: bold ? FontWeight.bold : FontWeight.w500,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.cocoa,
           ),
         ),
         Text(
           value,
-          style: TextStyle(
-            color: AppTheme.darkPlum,
-            fontWeight: FontWeight.bold,
-            fontSize: bold ? 17 : 14,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.cocoa,
           ),
         ),
       ],
@@ -621,18 +517,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return Scaffold(
       backgroundColor: AppTheme.cream,
 
-      appBar: AppBar(
-        title: const Text(
-          'Checkout',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: AppTheme.darkPlum,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: AppTheme.darkPlum,
-      ),
+      appBar: AppBar(title: const Text('Checkout')),
 
       body: ValueListenableBuilder<List<Map<String, dynamic>>>(
         valueListenable: AppData.cart,
@@ -642,185 +527,185 @@ class _CheckoutPageState extends State<CheckoutPage> {
           }
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 30),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // =================================================
-                // DATA PEMESAN
-                // =================================================
+                _sectionTitle('Informasi Pemesan'),
 
-                const Text(
-                  'Informasi Pemesan',
-                  style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.darkPlum,
-                  ),
-                ),
+                const SizedBox(height: 10),
 
-                const SizedBox(height: 14),
-
-                _buildTextField(
-                  controller: _nameController,
-                  label: 'Nama',
-                  hint: 'Masukkan nama kamu',
-                  icon: Icons.person_outline,
-                ),
-
-                const SizedBox(height: 12),
-
-                _buildTextField(
-                  controller: _phoneController,
-                  label: 'Nomor Telepon',
-                  hint: 'Contoh: 08123456789',
-                  icon: Icons.phone_outlined,
-                  keyboardType: TextInputType.phone,
-                ),
-
-                const SizedBox(height: 12),
-
-                _buildTextField(
-                  controller: _addressController,
-                  label: 'Alamat Pengiriman',
-                  hint: 'Masukkan alamat lengkap',
-                  icon: Icons.location_on_outlined,
-                  maxLines: 3,
-                ),
-
-                const SizedBox(height: 28),
-
-                // =================================================
-                // PENGIRIMAN
-                // =================================================
-                const Text(
-                  'Metode Pengiriman',
-                  style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.darkPlum,
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                _buildShippingOption(
-                  title: 'Reguler',
-                  subtitle: 'Estimasi 2–4 hari',
-                  price: 8000,
-                ),
-
-                _buildShippingOption(
-                  title: 'Express',
-                  subtitle: 'Estimasi 1–2 hari',
-                  price: 15000,
-                ),
-
-                const SizedBox(height: 16),
-
-                // =================================================
-                // PEMBAYARAN
-                // =================================================
-                const Text(
-                  'Metode Pembayaran',
-                  style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.darkPlum,
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                _buildPaymentOption(
-                  title: 'COD',
-                  icon: Icons.payments_outlined,
-                ),
-
-                _buildPaymentOption(
-                  title: 'Transfer Bank',
-                  icon: Icons.account_balance_outlined,
-                ),
-
-                _buildPaymentOption(
-                  title: 'E-Wallet',
-                  icon: Icons.account_balance_wallet_outlined,
-                ),
-
-                const SizedBox(height: 16),
-
-                // =================================================
-                // RINGKASAN
-                // =================================================
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: AppTheme.dustyRose,
-                    borderRadius: BorderRadius.circular(24),
+                    color: AppTheme.white,
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.cocoa.withValues(alpha: 0.06),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
                   child: Column(
                     children: [
-                      const Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Ringkasan Pesanan',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.darkPlum,
-                          ),
-                        ),
+                      _buildField(
+                        label: 'Nama',
+                        hint: 'Masukkan nama kamu',
+                        controller: _nameController,
+                        errorText: _nameError,
+                        onChanged: (_) {
+                          if (_nameError != null) {
+                            setState(() {
+                              _nameError = null;
+                            });
+                          }
+                        },
                       ),
 
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 12),
 
-                      _summaryRow('Subtotal', _formatRupiah(_subtotal)),
-
-                      const SizedBox(height: 10),
-
-                      _summaryRow('Pengiriman', _formatRupiah(_shippingCost)),
-
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 14),
-                        child: Divider(color: AppTheme.white),
+                      _buildField(
+                        label: 'Nomor Telepon',
+                        hint: 'Contoh: 08123456789',
+                        controller: _phoneController,
+                        errorText: _phoneError,
+                        keyboardType: TextInputType.phone,
+                        onChanged: (_) {
+                          if (_phoneError != null) {
+                            setState(() {
+                              _phoneError = null;
+                            });
+                          }
+                        },
                       ),
 
-                      _summaryRow('Total', _formatRupiah(_total), bold: true),
+                      const SizedBox(height: 12),
+
+                      _buildField(
+                        label: 'Alamat Pengiriman',
+                        hint: 'Masukkan alamat lengkap',
+                        controller: _addressController,
+                        errorText: _addressError,
+                        maxLines: 3,
+                        onChanged: (_) {
+                          if (_addressError != null) {
+                            setState(() {
+                              _addressError = null;
+                            });
+                          }
+                        },
+                      ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 22),
+                const SizedBox(height: 20),
 
-                // =================================================
-                // BUTTON KONFIRMASI
-                // =================================================
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton.icon(
-                    onPressed: _showConfirmationDialog,
-                    icon: const Icon(Icons.check_circle_outline),
-                    label: const Text(
-                      'KONFIRMASI PESANAN',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.4,
-                      ),
+                _sectionTitle('Metode Pengiriman'),
+
+                const SizedBox(height: 10),
+
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildShippingOption(
+                      title: 'Reguler',
+                      subtitle: 'Estimasi 2–4 hari',
+                      price: 8000,
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.darkPlum,
-                      foregroundColor: AppTheme.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
+
+                    const SizedBox(width: 10),
+
+                    _buildShippingOption(
+                      title: 'Express',
+                      subtitle: 'Estimasi 1–2 hari',
+                      price: 15000,
                     ),
-                  ),
+                  ],
                 ),
 
                 const SizedBox(height: 20),
+
+                _sectionTitle('Metode Pembayaran'),
+
+                const SizedBox(height: 10),
+
+                Row(
+                  children: [
+                    _buildPaymentOption('COD'),
+                    const SizedBox(width: 8),
+                    _buildPaymentOption('Transfer Bank'),
+                    const SizedBox(width: 8),
+                    _buildPaymentOption('E-Wallet'),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                // RINGKASAN
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.softPink,
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  child: Column(
+                    children: [
+                      _summaryRow('Subtotal', _formatRupiah(_subtotal)),
+
+                      const SizedBox(height: 8),
+
+                      _summaryRow('Pengiriman', _formatRupiah(_shippingCost)),
+
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Divider(
+                          height: 1,
+                          thickness: 1.5,
+                          color: AppTheme.peach,
+                        ),
+                      ),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Total',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.cocoa,
+                            ),
+                          ),
+                          Text(
+                            _formatRupiah(_total),
+                            style: const TextStyle(
+                              fontFamily: AppTheme.fontDisplay,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primaryDeep,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: GradientButton(
+                    label: 'KONFIRMASI PESANAN',
+                    leadingIcon: Icons.check_circle_outline,
+                    onPressed: _showConfirmationDialog,
+                  ),
+                ),
               ],
             ),
           );
@@ -830,7 +715,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   // =========================================================
-  // EMPTY CART
+  // KERANJANG KOSONG
   // =========================================================
 
   Widget _buildEmptyCart() {
@@ -842,14 +727,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
           children: [
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppTheme.softPink,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.shopping_bag_outlined,
                 size: 55,
-                color: AppTheme.dustyRoseDark,
+                color: AppTheme.primary,
               ),
             ),
 
@@ -858,9 +743,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
             const Text(
               'Keranjang masih kosong',
               style: TextStyle(
+                fontFamily: AppTheme.fontDisplay,
                 fontSize: 21,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.darkPlum,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.cocoa,
               ),
             ),
 
@@ -869,9 +755,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
             Text(
               'Tambahkan Mochi favoritmu terlebih dahulu.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppTheme.darkPlum.withValues(alpha: 0.60),
-              ),
+              style: TextStyle(color: AppTheme.cocoa.withValues(alpha: 0.8)),
             ),
 
             const SizedBox(height: 24),
@@ -880,13 +764,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
               onPressed: () {
                 Navigator.pop(context);
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.darkPlum,
-                foregroundColor: AppTheme.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
               child: const Text('KEMBALI'),
             ),
           ],

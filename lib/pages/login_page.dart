@@ -1,7 +1,15 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../widgets/animated_mochi_background.dart';
+import '../widgets/app_snackbar.dart';
+import '../widgets/custom_text_field.dart';
+import '../widgets/gradient_button.dart';
+import '../widgets/mochi_image.dart';
 import 'home_page.dart';
+import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -39,7 +47,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // =========================================================
-  // LOGIN
+  // LOGIN (validasi dan alur sama seperti sebelumnya)
   // =========================================================
 
   Future<void> login() async {
@@ -49,10 +57,7 @@ class _LoginPageState extends State<LoginPage> {
 
     final String password = passwordController.text.trim();
 
-    // ---------------------------------------------------------
     // VALIDASI EMAIL
-    // ---------------------------------------------------------
-
     if (email.isEmpty) {
       _showMessage('Email belum diisi.', Icons.email_outlined);
       return;
@@ -66,10 +71,7 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    // ---------------------------------------------------------
     // VALIDASI PASSWORD
-    // ---------------------------------------------------------
-
     if (password.isEmpty) {
       _showMessage('Password belum diisi.', Icons.lock_outline);
       return;
@@ -80,10 +82,7 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    // ---------------------------------------------------------
     // LOADING
-    // ---------------------------------------------------------
-
     setState(() {
       isLoading = true;
     });
@@ -97,56 +96,19 @@ class _LoginPageState extends State<LoginPage> {
       isLoading = false;
     });
 
-    // ---------------------------------------------------------
     // MASUK KE HOME
-    // ---------------------------------------------------------
-
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const HomePage()),
     );
   }
 
-  // =========================================================
-  // VALIDASI EMAIL
-  // =========================================================
-
   bool _isValidEmail(String email) {
     return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
   }
 
-  // =========================================================
-  // SNACKBAR
-  // =========================================================
-
   void _showMessage(String message, IconData icon) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          backgroundColor: AppTheme.darkPlum,
-          content: Row(
-            children: [
-              Icon(icon, color: AppTheme.white, size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  message,
-                  style: const TextStyle(
-                    color: AppTheme.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+    AppSnackBar.show(context, message, icon: icon);
   }
 
   // =========================================================
@@ -160,17 +122,7 @@ class _LoginPageState extends State<LoginPage> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: AppTheme.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(26),
-          ),
-          title: const Text(
-            'Forgot Password?',
-            style: TextStyle(
-              color: AppTheme.darkPlum,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          title: const Text('Forgot Password?'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,23 +130,23 @@ class _LoginPageState extends State<LoginPage> {
               Text(
                 'Masukkan email kamu. Fitur reset password dapat digunakan setelah aplikasi terhubung ke sistem akun.',
                 style: TextStyle(
-                  color: AppTheme.darkPlum.withValues(alpha: 0.65),
+                  color: AppTheme.cocoa.withValues(alpha: 0.8),
                   height: 1.4,
                 ),
               ),
+
               const SizedBox(height: 18),
+
               TextField(
                 controller: forgotController,
                 keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Email kamu',
-                  prefixIcon: const Icon(Icons.email_outlined),
-                  filled: true,
-                  fillColor: AppTheme.cream,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
+                  prefixIcon: Icon(
+                    Icons.email_outlined,
+                    color: AppTheme.primaryDeep,
                   ),
+                  fillColor: AppTheme.cream,
                 ),
               ),
             ],
@@ -206,17 +158,10 @@ class _LoginPageState extends State<LoginPage> {
               },
               child: const Text(
                 'Batal',
-                style: TextStyle(color: AppTheme.darkPlum),
+                style: TextStyle(color: AppTheme.cocoa),
               ),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: AppTheme.darkPlum,
-                foregroundColor: AppTheme.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
               onPressed: () {
                 final email = forgotController.text.trim();
 
@@ -254,6 +199,398 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  void _openRegister() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const RegisterPage()),
+    );
+  }
+
+  // =========================================================
+  // BAGIAN-BAGIAN TAMPILAN
+  // =========================================================
+
+  // Tanda merek kecil (logo) di kartu pada layout lebar.
+  Widget _buildBrandRow() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: AppTheme.white,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const MochiImage(
+              path: 'assets/images/mochie_logo.png',
+              borderRadius: 10,
+              fit: BoxFit.contain,
+            ),
+          ),
+
+          const SizedBox(width: 10),
+
+          const Text(
+            'Mochié',
+            style: TextStyle(
+              fontFamily: AppTheme.fontDisplay,
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.primaryDeep,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Kartu login (kaca semi-transparan).
+  Widget _buildCard({bool showBrand = false}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: AppTheme.white.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primary.withValues(alpha: 0.16),
+                blurRadius: 28,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (showBrand) _buildBrandRow(),
+
+              CustomTextField(
+                label: 'Email',
+                hint: 'nama@email.com',
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+              ),
+
+              const SizedBox(height: 14),
+
+              CustomTextField(
+                label: 'Password',
+                hint: 'Masukkan password',
+                controller: passwordController,
+                obscureText: !isPasswordVisible,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) {
+                  if (!isLoading) {
+                    login();
+                  }
+                },
+                suffixIcon: IconButton(
+                  tooltip: isPasswordVisible
+                      ? 'Sembunyikan password'
+                      : 'Tampilkan password',
+                  onPressed: () {
+                    setState(() {
+                      isPasswordVisible = !isPasswordVisible;
+                    });
+                  },
+                  icon: Icon(
+                    isPasswordVisible
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    color: AppTheme.primaryDeep,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // REMEMBER + FORGOT
+              Row(
+                children: [
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: Checkbox(
+                      value: rememberMe,
+                      onChanged: (value) {
+                        setState(() {
+                          rememberMe = value ?? false;
+                        });
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(width: 8),
+
+                  const Text(
+                    'Remember me',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.cocoa,
+                    ),
+                  ),
+
+                  const Spacer(),
+
+                  TextButton(
+                    onPressed: _showForgotPassword,
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text(
+                      'Forgot password?',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              SizedBox(
+                width: double.infinity,
+                child: GradientButton(
+                  label: 'Masuk ke Mochié',
+                  trailingIcon: Icons.arrow_forward_rounded,
+                  isLoading: isLoading,
+                  onPressed: login,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              Center(
+                child: Text(
+                  'atau',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.cocoa.withValues(alpha: 0.75),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton(
+                  onPressed: _continueAsGuest,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.cocoa,
+                    backgroundColor: AppTheme.white,
+                    side: const BorderSide(
+                      color: AppTheme.dustyRose,
+                      width: 1.5,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(17),
+                    ),
+                  ),
+                  child: const Text('Lanjut sebagai tamu'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRegisterLink() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text(
+          'Belum punya akun? ',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.cocoa,
+          ),
+        ),
+
+        TextButton(
+          onPressed: _openRegister,
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.zero,
+            minimumSize: const Size(0, 36),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          child: const Text(
+            'Daftar',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              decoration: TextDecoration.underline,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // =========================================================
+  // LAYOUT VERTIKAL (ponsel portrait)
+  // =========================================================
+
+  Widget _buildNarrow() {
+    // Saat keyboard terbuka, header disembunyikan agar form tetap terlihat.
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+      child: Column(
+        children: [
+          if (!keyboardOpen) ...[
+            Container(
+              width: 76,
+              height: 76,
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.white,
+                borderRadius: BorderRadius.circular(26),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primary.withValues(alpha: 0.2),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: const MochiImage(
+                path: 'assets/images/mochie_logo.png',
+                borderRadius: 18,
+                fit: BoxFit.contain,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            const Text(
+              'Welcome',
+              style: TextStyle(
+                fontFamily: AppTheme.fontDisplay,
+                fontSize: 40,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1,
+                color: AppTheme.primaryDeep,
+              ),
+            ),
+
+            const Text(
+              'Have a great journey ahead...',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.5,
+                color: AppTheme.cocoa,
+              ),
+            ),
+
+            const SizedBox(height: 22),
+          ],
+
+          _buildCard(),
+
+          const SizedBox(height: 12),
+
+          _buildRegisterLink(),
+        ],
+      ),
+    );
+  }
+
+  // =========================================================
+  // LAYOUT HORIZONTAL (landscape / tablet / browser lebar)
+  // =========================================================
+
+  Widget _buildWide() {
+    return Row(
+      children: [
+        Expanded(
+          flex: 5,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 64, right: 24),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    'Welcome',
+                    style: TextStyle(
+                      fontFamily: AppTheme.fontDisplay,
+                      fontSize: 72,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 2,
+                      height: 1,
+                      color: AppTheme.primaryDeep,
+                    ),
+                  ),
+
+                  SizedBox(height: 10),
+
+                  Text(
+                    'Have a great journey ahead...',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 2,
+                      color: AppTheme.cocoa,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        Expanded(
+          flex: 4,
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildCard(showBrand: true),
+
+                    const SizedBox(height: 12),
+
+                    _buildRegisterLink(),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   // =========================================================
   // BUILD
   // =========================================================
@@ -262,480 +599,16 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.cream,
-      body: Stack(
-        children: [
-          // ===================================================
-          // BACKGROUND DECORATION
-          // ===================================================
+      body: AnimatedMochiBackground(
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 720;
 
-          Positioned(
-            top: -100,
-            right: -80,
-            child: Container(
-              width: 250,
-              height: 250,
-              decoration: BoxDecoration(
-                color: AppTheme.dustyRose.withValues(alpha: 0.55),
-                shape: BoxShape.circle,
-              ),
-            ),
+              return isWide ? _buildWide() : _buildNarrow();
+            },
           ),
-
-          Positioned(
-            bottom: -90,
-            left: -100,
-            child: Container(
-              width: 250,
-              height: 250,
-              decoration: BoxDecoration(
-                color: AppTheme.softPink.withValues(alpha: 0.9),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-
-          // Dekorasi kecil
-          const Positioned(
-            top: 90,
-            left: 28,
-            child: Text(
-              '✦',
-              style: TextStyle(fontSize: 18, color: AppTheme.dustyRoseDark),
-            ),
-          ),
-
-          const Positioned(
-            top: 160,
-            right: 32,
-            child: Text(
-              '♡',
-              style: TextStyle(fontSize: 22, color: AppTheme.dustyRoseDark),
-            ),
-          ),
-
-          // ===================================================
-          // MAIN CONTENT
-          // ===================================================
-          SafeArea(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(22, 22, 22, 25),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ===========================================
-                  // BRAND
-                  // ===========================================
-
-                  Center(
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 82,
-                          height: 82,
-                          decoration: BoxDecoration(
-                            color: AppTheme.white,
-                            borderRadius: BorderRadius.circular(28),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.dustyRoseDark.withValues(
-                                  alpha: 0.15,
-                                ),
-                                blurRadius: 20,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(28),
-                            child: Image.asset(
-                              'assets/images/mochie_logo.png',
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 15),
-
-                        const Text(
-                          'Mochié',
-                          style: TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: -0.8,
-                            color: AppTheme.darkPlum,
-                          ),
-                        ),
-
-                        const SizedBox(height: 4),
-
-                        Text(
-                          'A little sweetness for your day.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppTheme.dustyRoseDark,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // ===========================================
-                  // LOGIN CARD
-                  // ===========================================
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
-                    decoration: BoxDecoration(
-                      color: AppTheme.white,
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.dustyRoseDark.withValues(alpha: 0.12),
-                          blurRadius: 28,
-                          offset: const Offset(0, 12),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Welcome back 👋',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.darkPlum,
-                          ),
-                        ),
-
-                        const SizedBox(height: 7),
-
-                        Text(
-                          'Masuk untuk melanjutkan perjalanan manismu bersama Mochié.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            height: 1.45,
-                            color: AppTheme.darkPlum.withValues(alpha: 0.58),
-                          ),
-                        ),
-
-                        const SizedBox(height: 25),
-
-                        // =====================================
-                        // EMAIL
-                        // =====================================
-                        const Text(
-                          'Email',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.darkPlum,
-                          ),
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        TextField(
-                          controller: emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          decoration: _inputDecoration(
-                            hint: 'nama@email.com',
-                            icon: Icons.alternate_email,
-                          ),
-                        ),
-
-                        const SizedBox(height: 18),
-
-                        // =====================================
-                        // PASSWORD
-                        // =====================================
-                        const Text(
-                          'Password',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.darkPlum,
-                          ),
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        TextField(
-                          controller: passwordController,
-                          obscureText: !isPasswordVisible,
-                          textInputAction: TextInputAction.done,
-                          onSubmitted: (_) {
-                            if (!isLoading) {
-                              login();
-                            }
-                          },
-                          decoration:
-                              _inputDecoration(
-                                hint: 'Masukkan password',
-                                icon: Icons.lock_outline,
-                              ).copyWith(
-                                suffixIcon: IconButton(
-                                  tooltip: isPasswordVisible
-                                      ? 'Sembunyikan password'
-                                      : 'Tampilkan password',
-                                  onPressed: () {
-                                    setState(() {
-                                      isPasswordVisible = !isPasswordVisible;
-                                    });
-                                  },
-                                  icon: Icon(
-                                    isPasswordVisible
-                                        ? Icons.visibility_off_outlined
-                                        : Icons.visibility_outlined,
-                                    color: AppTheme.dustyRoseDark,
-                                  ),
-                                ),
-                              ),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // =====================================
-                        // REMEMBER + FORGOT
-                        // =====================================
-                        Row(
-                          children: [
-                            SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: Checkbox(
-                                value: rememberMe,
-                                activeColor: AppTheme.darkPlum,
-                                checkColor: AppTheme.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                onChanged: (value) {
-                                  setState(() {
-                                    rememberMe = value ?? false;
-                                  });
-                                },
-                              ),
-                            ),
-
-                            const SizedBox(width: 7),
-
-                            const Text(
-                              'Remember me',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppTheme.darkPlum,
-                              ),
-                            ),
-
-                            const Spacer(),
-
-                            TextButton(
-                              onPressed: _showForgotPassword,
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: const Text(
-                                'Forgot password?',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.dustyRoseDark,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // =====================================
-                        // LOGIN BUTTON
-                        // =====================================
-                        SizedBox(
-                          width: double.infinity,
-                          height: 54,
-                          child: FilledButton(
-                            onPressed: isLoading ? null : login,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppTheme.darkPlum,
-                              disabledBackgroundColor: AppTheme.darkPlum
-                                  .withValues(alpha: 0.55),
-                              foregroundColor: AppTheme.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(17),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: isLoading
-                                ? const SizedBox(
-                                    width: 22,
-                                    height: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: AppTheme.white,
-                                    ),
-                                  )
-                                : const Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'Masuk ke Mochié',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      SizedBox(width: 8),
-                                      Icon(
-                                        Icons.arrow_forward_rounded,
-                                        size: 19,
-                                      ),
-                                    ],
-                                  ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 18),
-
-                        // =====================================
-                        // DIVIDER
-                        // =====================================
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Divider(
-                                color: AppTheme.dustyRose.withValues(
-                                  alpha: 0.7,
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              child: Text(
-                                'atau',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppTheme.darkPlum.withValues(
-                                    alpha: 0.45,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Divider(
-                                color: AppTheme.dustyRose.withValues(
-                                  alpha: 0.7,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 15),
-
-                        // =====================================
-                        // GUEST
-                        // =====================================
-                        SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: OutlinedButton(
-                            onPressed: _continueAsGuest,
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppTheme.darkPlum,
-                              side: BorderSide(
-                                color: AppTheme.dustyRoseDark.withValues(
-                                  alpha: 0.35,
-                                ),
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(17),
-                              ),
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.person_outline_rounded, size: 19),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Lanjut sebagai tamu',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // ===========================================
-                  // FOOTER
-                  // ===========================================
-                  Center(
-                    child: Text(
-                      'Made with sweetness • MOCHIÉ 🍓',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppTheme.darkPlum.withValues(alpha: 0.45),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // =========================================================
-  // INPUT DECORATION
-  // =========================================================
-
-  InputDecoration _inputDecoration({
-    required String hint,
-    required IconData icon,
-  }) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(
-        color: AppTheme.darkPlum.withValues(alpha: 0.35),
-        fontSize: 13,
-      ),
-      prefixIcon: Icon(icon, color: AppTheme.dustyRoseDark, size: 20),
-      filled: true,
-      fillColor: AppTheme.cream,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(17),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(17),
-        borderSide: BorderSide(
-          color: AppTheme.dustyRose.withValues(alpha: 0.35),
         ),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(17),
-        borderSide: const BorderSide(color: AppTheme.dustyRoseDark, width: 1.5),
       ),
     );
   }

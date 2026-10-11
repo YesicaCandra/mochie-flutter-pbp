@@ -2,22 +2,34 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
+// Field berlabel (label di atas) untuk halaman Login dan Register.
+// Parameter lama tetap sama; parameter baru bersifat opsional.
 class CustomTextField extends StatelessWidget {
   final String label;
   final String hint;
-  final IconData icon;
+  final IconData? icon;
   final TextEditingController controller;
   final bool obscureText;
   final TextInputType keyboardType;
+  final String? errorText;
+  final Widget? suffixIcon;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
 
   const CustomTextField({
     super.key,
     required this.label,
     required this.hint,
-    required this.icon,
     required this.controller,
+    this.icon,
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
+    this.errorText,
+    this.suffixIcon,
+    this.textInputAction,
+    this.onChanged,
+    this.onSubmitted,
   });
 
   @override
@@ -28,23 +40,33 @@ class CustomTextField extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(
-            color: AppTheme.darkPlum,
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
+            color: AppTheme.cocoa,
+            fontWeight: FontWeight.w800,
+            fontSize: 13,
           ),
         ),
-        const SizedBox(height: 8),
+
+        const SizedBox(height: 6),
+
         TextField(
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
-          style: const TextStyle(color: AppTheme.darkPlum),
+          textInputAction: textInputAction,
+          onChanged: onChanged,
+          onSubmitted: onSubmitted,
+          style: const TextStyle(
+            color: AppTheme.cocoa,
+            fontWeight: FontWeight.w700,
+          ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(
-              color: AppTheme.darkPlum.withValues(alpha: 0.4),
-            ),
-            prefixIcon: Icon(icon, color: AppTheme.dustyRoseDark),
+            errorText: errorText,
+            fillColor: AppTheme.cream,
+            prefixIcon: icon == null
+                ? null
+                : Icon(icon, color: AppTheme.primaryDeep, size: 20),
+            suffixIcon: suffixIcon,
           ),
         ),
       ],

@@ -6,6 +6,13 @@ import 'models/order.dart';
 
 class AppData {
   // =========================================================
+  // FOTO PROFIL (dipakai halaman Profile dan About)
+  // =========================================================
+
+  static final ValueNotifier<Uint8List?> profilePhoto =
+      ValueNotifier<Uint8List?>(null);
+
+  // =========================================================
   // FAVORITE
   // =========================================================
 

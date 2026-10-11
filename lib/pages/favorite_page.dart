@@ -3,10 +3,15 @@ import 'package:flutter/material.dart';
 import '../app_data.dart';
 import '../models/mochi.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_snackbar.dart';
+import '../widgets/mochi_image.dart';
 import 'mochi_detail_page.dart';
 
 class FavoritePage extends StatelessWidget {
-  const FavoritePage({super.key});
+  // Dipanggil tombol "Mulai Eksplorasi" untuk kembali ke tab Home.
+  final VoidCallback? onExplore;
+
+  const FavoritePage({super.key, this.onExplore});
 
   String _formatRupiah(String price) {
     final number = price
@@ -25,6 +30,10 @@ class FavoritePage extends StatelessWidget {
     return 'Rp$formatted';
   }
 
+  // =========================================================
+  // HAPUS FAVORIT (dengan konfirmasi)
+  // =========================================================
+
   Future<void> _removeFavorite(
     BuildContext context,
     Map<String, dynamic> mochi,
@@ -33,46 +42,20 @@ class FavoritePage extends StatelessWidget {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: AppTheme.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          title: const Text(
-            'Hapus dari Favorite?',
-            style: TextStyle(
-              color: AppTheme.darkPlum,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          content: Text(
-            '${mochi['name']} akan dihapus dari daftar favorite.',
-            style: const TextStyle(color: AppTheme.darkPlum, height: 1.5),
-          ),
+          title: const Text('Hapus dari Favorite?'),
+          content: Text('${mochi['name']} akan dihapus dari daftar favorite.'),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(dialogContext, false);
               },
-              child: const Text(
-                'BATAL',
-                style: TextStyle(
-                  color: AppTheme.dustyRoseDark,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              child: const Text('BATAL'),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(dialogContext, true);
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.darkPlum,
-                foregroundColor: AppTheme.white,
-              ),
-              child: const Text(
-                'HAPUS',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
+              child: const Text('HAPUS'),
             ),
           ],
         );
@@ -83,97 +66,49 @@ class FavoritePage extends StatelessWidget {
       AppData.toggleFavorite(mochi);
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${mochi['name']} dihapus dari favorite'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: AppTheme.darkPlum,
-            margin: const EdgeInsets.all(16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            duration: const Duration(seconds: 2),
-          ),
+        AppSnackBar.show(
+          context,
+          '${mochi['name']} dihapus dari favorite',
+          icon: Icons.heart_broken_outlined,
         );
       }
     }
   }
 
+  // =========================================================
+  // TAMBAH KE CART
+  // =========================================================
+
   void _addToCart(BuildContext context, Map<String, dynamic> mochi) {
     AppData.addToCart(mochi);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle_outline, color: AppTheme.white),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                '${mochi['name']} ditambahkan ke cart',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
-        ),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppTheme.darkPlum,
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        duration: const Duration(seconds: 3),
-      ),
-    );
+    AppSnackBar.success(context, '${mochi['name']} ditambahkan ke cart');
   }
 
-  Widget _rating(double rating) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      decoration: BoxDecoration(
-        color: AppTheme.softPink,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.star_rounded,
-            size: 16,
-            color: AppTheme.dustyRoseDark,
-          ),
-          const SizedBox(width: 3),
-          Text(
-            rating.toString(),
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.darkPlum,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // =========================================================
+  // KARTU FAVORIT
+  // =========================================================
 
   Widget _favoriteCard(BuildContext context, Map<String, dynamic> mochi) {
     final rating = (mochi['rating'] as num).toDouble();
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppTheme.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.darkPlum.withValues(alpha: 0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 7),
+            color: AppTheme.cocoa.withValues(alpha: 0.07),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(22),
           onTap: () {
             Navigator.push(
               context,
@@ -184,26 +119,18 @@ class FavoritePage extends StatelessWidget {
             );
           },
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             child: Row(
               children: [
-                // IMAGE
-                Hero(
-                  tag: 'favorite-${mochi['name']}',
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
-                    child: Image.asset(
-                      mochi['image'],
-                      width: 105,
-                      height: 105,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+                MochiImage(
+                  path: mochi['image'].toString(),
+                  width: 96,
+                  height: 118,
+                  borderRadius: 16,
                 ),
 
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
 
-                // CONTENT
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,85 +141,117 @@ class FavoritePage extends StatelessWidget {
                           Expanded(
                             child: Text(
                               mochi['name'],
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
+                                fontFamily: AppTheme.fontDisplay,
                                 fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: AppTheme.darkPlum,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.cocoa,
                               ),
                             ),
                           ),
 
-                          IconButton(
-                            onPressed: () {
+                          InkWell(
+                            onTap: () {
                               _removeFavorite(context, mochi);
                             },
-                            icon: const Icon(
-                              Icons.favorite_rounded,
-                              color: AppTheme.dustyRoseDark,
+                            borderRadius: BorderRadius.circular(20),
+                            child: const Padding(
+                              padding: EdgeInsets.all(4),
+                              child: Icon(
+                                Icons.favorite_rounded,
+                                size: 22,
+                                color: AppTheme.primaryDeep,
+                              ),
                             ),
-                            tooltip: 'Hapus favorite',
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
                           ),
                         ],
                       ),
 
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
 
                       Text(
                         mochi['description'],
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: AppTheme.darkPlum,
-                          height: 1.4,
+                          height: 1.35,
+                          color: AppTheme.cocoa.withValues(alpha: 0.8),
                         ),
                       ),
 
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
 
                       Row(
                         children: [
-                          _rating(rating),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.yellow,
+                              borderRadius: BorderRadius.circular(9),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.star_rounded,
+                                  size: 13,
+                                  color: AppTheme.cocoa,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  rating.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.cocoa,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
                           const Spacer(),
+
                           Text(
                             _formatRupiah(mochi['price']),
                             style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w900,
-                              color: AppTheme.darkPlum,
+                              fontFamily: AppTheme.fontDisplay,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primaryDeep,
                             ),
                           ),
                         ],
                       ),
 
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
 
                       SizedBox(
                         width: double.infinity,
-                        height: 38,
-                        child: ElevatedButton.icon(
+                        height: 36,
+                        child: ElevatedButton(
                           onPressed: () {
                             _addToCart(context, mochi);
                           },
-                          icon: const Icon(
-                            Icons.shopping_bag_outlined,
-                            size: 17,
-                          ),
-                          label: const Text(
-                            'TAMBAH KE CART',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.darkPlum,
-                            foregroundColor: AppTheme.white,
-                            elevation: 0,
+                            backgroundColor: AppTheme.primary,
+                            minimumSize: Size.zero,
+                            padding: EdgeInsets.zero,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'TAMBAH KE CART',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ),
@@ -308,6 +267,10 @@ class FavoritePage extends StatelessWidget {
     );
   }
 
+  // =========================================================
+  // KOSONG
+  // =========================================================
+
   Widget _emptyFavorite(BuildContext context) {
     return Center(
       child: Padding(
@@ -315,68 +278,52 @@ class FavoritePage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Icon Love
             Container(
               width: 100,
               height: 100,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppTheme.softPink,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.favorite_border_rounded,
                 size: 48,
-                color: AppTheme.dustyRoseDark,
+                color: AppTheme.primary,
               ),
             ),
 
             const SizedBox(height: 24),
 
-            // Judul
             const Text(
               'Belum Ada Favorit',
               textAlign: TextAlign.center,
               style: TextStyle(
+                fontFamily: AppTheme.fontDisplay,
                 fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.darkPlum,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.cocoa,
               ),
             ),
 
             const SizedBox(height: 10),
 
-            // Deskripsi
-            const Text(
+            Text(
               'Yuk pilih mochi favoritmu\n'
               'dan simpan di sini ♡',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
                 height: 1.5,
-                color: Colors.black54,
+                color: AppTheme.cocoa.withValues(alpha: 0.8),
               ),
             ),
 
             const SizedBox(height: 28),
 
-            // Tombol kembali eksplorasi
             ElevatedButton.icon(
-              onPressed: () {},
-
+              onPressed: onExplore,
               icon: const Icon(Icons.explore_outlined, size: 20),
               label: const Text('Mulai Eksplorasi'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.darkPlum,
-                foregroundColor: AppTheme.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 22,
-                  vertical: 14,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
             ),
           ],
         ),
@@ -384,31 +331,35 @@ class FavoritePage extends StatelessWidget {
     );
   }
 
+  // =========================================================
+  // HEADER
+  // =========================================================
+
   Widget _header(int count) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 18),
-      padding: const EdgeInsets.all(18),
+      margin: const EdgeInsets.fromLTRB(20, 8, 20, 14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppTheme.softPink, AppTheme.dustyRose],
+          colors: [AppTheme.primaryDeep, AppTheme.primary],
         ),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
         children: [
           Container(
-            width: 52,
-            height: 52,
+            width: 48,
+            height: 48,
             decoration: const BoxDecoration(
               color: AppTheme.white,
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.favorite_rounded,
-              color: AppTheme.dustyRoseDark,
-              size: 27,
+              color: AppTheme.primaryDeep,
+              size: 24,
             ),
           ),
 
@@ -421,19 +372,19 @@ class FavoritePage extends StatelessWidget {
                 const Text(
                   'Mochi Favoritku',
                   style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w900,
-                    color: AppTheme.darkPlum,
+                    fontFamily: AppTheme.fontDisplay,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.white,
                   ),
                 ),
-
-                const SizedBox(height: 3),
 
                 Text(
                   '$count mochi tersimpan',
                   style: const TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.darkPlum,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.white,
                   ),
                 ),
               ],
@@ -444,16 +395,15 @@ class FavoritePage extends StatelessWidget {
     );
   }
 
+  // =========================================================
+  // BUILD
+  // =========================================================
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.cream,
-      appBar: AppBar(
-        title: const Text(
-          'Favorite',
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
-      ),
+      appBar: AppBar(title: const Text('Favorite')),
       body: ValueListenableBuilder<List<Map<String, dynamic>>>(
         valueListenable: AppData.favorites,
         builder: (context, favorites, child) {
@@ -467,7 +417,7 @@ class FavoritePage extends StatelessWidget {
 
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                   itemCount: favorites.length,
                   itemBuilder: (context, index) {
                     return _favoriteCard(context, favorites[index]);
