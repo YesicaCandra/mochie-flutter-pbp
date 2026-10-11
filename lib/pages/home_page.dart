@@ -64,6 +64,88 @@ final List<Mochi> mochiData = [
     rating: 4.9,
     image: 'assets/images/mochi red velvet.jpg',
   ),
+
+  Mochi(
+    name: 'Mochi Pistachio',
+    description: 'Mochi lembut dengan isian pistachio yang gurih dan creamy.',
+    detailDescription: 'Mochi Pistachio menghadirkan kulit mochi yang lembut dengan cita rasa kacang pistachio yang khas, gurih, dan creamy.',
+    price: 'Rp15.000',
+    rating: 4.9,
+    image: 'assets/images/mochi pistachio.jpg',
+  ),
+
+  Mochi(
+    name: 'Mochi Durian',
+    description: 'Mochi lembut dengan isian durian yang khas dan creamy.',
+    detailDescription: 'Mochi Durian memadukan kulit mochi yang kenyal dengan isian durian yang lembut dan memiliki aroma khas.',
+    price: 'Rp15.000',
+    rating: 4.8,
+    image: 'assets/images/mochi durian.jpg',
+  ),
+
+  Mochi(
+    name: 'Mochi Blueberry',
+    description:
+        'Mochi dengan perpaduan blueberry yang manis dan sedikit asam.',
+    detailDescription: 'Mochi Blueberry menawarkan perpaduan kulit mochi yang lembut dengan rasa blueberry yang manis dan sedikit asam.',
+    price: 'Rp14.000',
+    rating: 4.8,
+    image: 'assets/images/mochi blueberry.webp',
+  ),
+
+  Mochi(
+    name: 'Mochi Cookies & Cream',
+    description: 'Mochi creamy dengan perpaduan krim dan biskuit cokelat.',
+    detailDescription: 'Mochi Cookies & Cream memadukan kulit mochi yang kenyal dengan isian krim lembut dan cita rasa biskuit cokelat.',
+    price: 'Rp14.000',
+    rating: 4.9,
+    image: 'assets/images/mochi cookies & cream.jpeg',
+  ),
+
+  Mochi(
+    name: 'Mochi Dubai Chewy',
+    description: 'Mochi dengan sensasi cokelat dan pistachio yang istimewa.',
+    detailDescription: 'Mochi Dubai Chewy terinspirasi dari perpaduan cokelat dan pistachio dengan tekstur mochi yang lembut dan kenyal.',
+    price: 'Rp18.000',
+    rating: 4.9,
+    image: 'assets/images/mochi dubai chewy.jpg',
+  ),
+
+  Mochi(
+    name: 'Mochi Mint Chocolate',
+    description: 'Perpaduan rasa mint yang segar dengan cokelat.',
+    detailDescription: 'Mochi Mint Chocolate memadukan sensasi mint yang menyegarkan dengan rasa cokelat yang kaya dalam balutan kulit mochi yang kenyal.',
+    price: 'Rp15.000',
+    rating: 4.8,
+    image: 'assets/images/mochi mint chocolate.jpg',
+  ),
+
+  Mochi(
+    name: 'Mochi Caramel',
+    description: 'Mochi manis dengan sentuhan karamel yang lembut.',
+    detailDescription: 'Mochi Caramel menawarkan rasa karamel yang manis dengan tekstur lembut dan kenyal untuk menemani waktu santai.',
+    price: 'Rp14.000',
+    rating: 4.7,
+    image: 'assets/images/mochi caramel.jpg',
+  ),
+
+  Mochi(
+    name: 'Mochi Tiramisu',
+    description: 'Mochi dengan cita rasa kopi dan krim ala tiramisu.',
+    detailDescription: 'Mochi Tiramisu menghadirkan perpaduan cita rasa kopi dan krim yang lembut dalam kulit mochi yang kenyal.',
+    price: 'Rp15.000',
+    rating: 4.9,
+    image: 'assets/images/mochi tiramisu.jpg',
+  ),
+
+  Mochi(
+    name: 'Mochi Vanilla',
+    description: 'Mochi lembut dengan rasa vanilla yang manis dan harum.',
+    detailDescription: 'Mochi Vanilla memiliki cita rasa vanilla yang lembut dan harum, cocok untuk pencinta camilan manis dengan rasa klasik.',
+    price: 'Rp13.000',
+    rating: 4.7,
+    image: 'assets/images/mochi vanilla.jpg',
+  ),
 ];
 
 // Gaya teks judul (Fredoka).
@@ -105,6 +187,15 @@ class _HomePageState extends State<HomePage> {
     'Taro',
     'Mango',
     'Red Velvet',
+    'Pistachio',
+    'Durian',
+    'Blueberry',
+    'Cookies & Cream',
+    'Dubai Chewy',
+    'Mint Chocolate',
+    'Caramel',
+    'Tiramisu',
+    'Vanilla',
   ];
 
   double _getPrice(String price) {
