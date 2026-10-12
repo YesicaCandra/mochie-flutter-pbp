@@ -5,6 +5,7 @@ import '../models/mochi.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_snackbar.dart';
 import '../widgets/mochi_image.dart';
+import '../widgets/responsive.dart';
 import 'cart_page.dart';
 import 'favorite_page.dart';
 import 'mochi_detail_page.dart';
@@ -275,46 +276,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   // ===========================================================
-  // HEADER (sapaan + tombol keranjang)
+  // TOMBOL KERANJANG (dengan badge jumlah)
   // ===========================================================
-
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 240),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Hello, Mochi Lover!',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.cocoa.withValues(alpha: 0.8),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Temukan Mochi Favoritmu',
-                      style: _displayStyle(24, height: 1.15),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          _buildCartButton(),
-        ],
-      ),
-    );
-  }
 
   Widget _buildCartButton() {
     return ValueListenableBuilder<List<Map<String, dynamic>>>(
@@ -389,72 +352,91 @@ class _HomePageState extends State<HomePage> {
   }
 
   // ===========================================================
-  // SEARCH BAR
+  // SAPAAN
   // ===========================================================
 
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppTheme.white,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.cocoa.withValues(alpha: 0.06),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: TextField(
-          controller: _searchController,
-          onChanged: (value) {
-            setState(() {
-              _searchQuery = value;
-            });
-          },
-          style: const TextStyle(
-            color: AppTheme.cocoa,
-            fontSize: 14,
+  Widget _buildGreeting(bool isRow) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Hello, Mochi Lover!',
+          style: TextStyle(
+            fontSize: 13,
             fontWeight: FontWeight.w700,
+            color: AppTheme.cocoa.withValues(alpha: 0.8),
           ),
-          decoration: InputDecoration(
-            hintText: 'Cari mochi favoritmu...',
-            prefixIcon: const Icon(
-              Icons.search_rounded,
-              color: AppTheme.primaryDeep,
-              size: 22,
-            ),
-            suffixIcon: _searchQuery.isNotEmpty
-                ? IconButton(
-                    tooltip: 'Hapus pencarian',
-                    onPressed: () {
-                      _searchController.clear();
+        ),
+        const SizedBox(height: 2),
+        Text(
+          'Temukan Mochi Favoritmu',
+          style: _displayStyle(isRow ? 28 : 24, height: 1.15),
+        ),
+      ],
+    );
+  }
 
-                      setState(() {
-                        _searchQuery = '';
-                      });
-                    },
-                    icon: const Icon(
-                      Icons.close_rounded,
-                      color: AppTheme.cocoa,
-                    ),
-                  )
-                : null,
-            contentPadding: const EdgeInsets.symmetric(vertical: 15),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(18),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(18),
-              borderSide: BorderSide.none,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(18),
-              borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
-            ),
+  // ===========================================================
+  // KOTAK PENCARIAN
+  // ===========================================================
+
+  Widget _buildSearchField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.cocoa.withValues(alpha: 0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value;
+          });
+        },
+        style: const TextStyle(
+          color: AppTheme.cocoa,
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+        ),
+        decoration: InputDecoration(
+          hintText: 'Cari mochi favoritmu...',
+          prefixIcon: const Icon(
+            Icons.search_rounded,
+            color: AppTheme.primaryDeep,
+            size: 22,
+          ),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  tooltip: 'Hapus pencarian',
+                  onPressed: () {
+                    _searchController.clear();
+
+                    setState(() {
+                      _searchQuery = '';
+                    });
+                  },
+                  icon: const Icon(Icons.close_rounded, color: AppTheme.cocoa),
+                )
+              : null,
+          contentPadding: const EdgeInsets.symmetric(vertical: 15),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
           ),
         ),
       ),
@@ -465,139 +447,158 @@ class _HomePageState extends State<HomePage> {
   // BANNER PROMO
   // ===========================================================
 
-  Widget _buildPromoBanner() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      child: Container(
-        width: double.infinity,
-        constraints: const BoxConstraints(minHeight: 128),
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppTheme.primaryDeep, AppTheme.primary],
+  Widget _buildPromoBanner(bool isRow) {
+    return Container(
+      width: double.infinity,
+      constraints: BoxConstraints(minHeight: isRow ? 132 : 128),
+      padding: EdgeInsets.symmetric(horizontal: isRow ? 32 : 18, vertical: 18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppTheme.primaryDeep, AppTheme.primary],
+        ),
+        borderRadius: BorderRadius.circular(isRow ? 28 : 26),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withValues(alpha: 0.25),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
-          borderRadius: BorderRadius.circular(26),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primary.withValues(alpha: 0.25),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.yellow,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Text(
+                    'MOCHIÉ SPECIAL',
+                    style: TextStyle(
+                      color: AppTheme.cocoa,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                Text(
+                  isRow
+                      ? 'Sweet moments, one bite away'
+                      : 'Sweet moments,\none bite away',
+                  style: _displayStyle(
+                    isRow ? 28 : 22,
+                    color: AppTheme.white,
+                    height: 1.2,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.yellow,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text(
-                      'MOCHIÉ SPECIAL',
-                      style: TextStyle(
-                        color: AppTheme.cocoa,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ),
+          ),
 
-                  const SizedBox(height: 10),
+          const SizedBox(width: 8),
 
-                  Text(
-                    'Sweet moments,\none bite away',
-                    style: _displayStyle(
-                      22,
-                      color: AppTheme.white,
-                      height: 1.2,
-                    ),
+          // Dua bola mochi dekoratif
+          SizedBox(
+            width: isRow ? 130 : 108,
+            height: isRow ? 92 : 72,
+            child: Stack(
+              children: [
+                Positioned(
+                  left: 0,
+                  bottom: 0,
+                  child: _MochiBall(
+                    size: isRow ? 92 : 70,
+                    color: AppTheme.peach,
                   ),
-                ],
-              ),
+                ),
+                Positioned(
+                  left: isRow ? 66 : 52,
+                  bottom: 0,
+                  child: _MochiBall(
+                    size: isRow ? 70 : 56,
+                    color: AppTheme.yellow,
+                  ),
+                ),
+              ],
             ),
-
-            const SizedBox(width: 8),
-
-            // Dua bola mochi dekoratif
-            SizedBox(
-              width: 108,
-              height: 72,
-              child: Stack(
-                children: const [
-                  Positioned(
-                    left: 0,
-                    bottom: 0,
-                    child: _MochiBall(size: 70, color: AppTheme.peach),
-                  ),
-                  Positioned(
-                    left: 52,
-                    bottom: 0,
-                    child: _MochiBall(size: 56, color: AppTheme.yellow),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   // ===========================================================
   // CHIP PILIHAN RASA
+  // Layar lebar: dibungkus (wrap) agar mudah diklik dengan mouse.
+  // Layar sempit: daftar horizontal yang bisa digeser.
   // ===========================================================
 
-  Widget _buildFilterChips() {
+  Widget _buildChip(String filter) {
+    final isSelected = _selectedFilter == filter;
+
+    return ChoiceChip(
+      label: Text(filter),
+      selected: isSelected,
+      onSelected: (_) {
+        setState(() {
+          _selectedFilter = filter;
+        });
+      },
+      labelStyle: TextStyle(
+        color: isSelected ? AppTheme.white : AppTheme.cocoa,
+        fontWeight: FontWeight.w800,
+        fontSize: 13,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      backgroundColor: AppTheme.white,
+      selectedColor: AppTheme.primaryDeep,
+      side: BorderSide(
+        color: isSelected ? AppTheme.primaryDeep : AppTheme.dustyRose,
+        width: 1.5,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      showCheckmark: false,
+    );
+  }
+
+  Widget _buildFilterChips(bool isRow, double hPad) {
+    if (isRow) {
+      return Padding(
+        padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 0),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _filters.map(_buildChip).toList(),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(top: 16),
       child: SizedBox(
         height: 42,
         child: ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: EdgeInsets.symmetric(horizontal: hPad),
           scrollDirection: Axis.horizontal,
           itemCount: _filters.length,
           itemBuilder: (context, index) {
-            final filter = _filters[index];
-            final isSelected = _selectedFilter == filter;
-
             return Padding(
               padding: const EdgeInsets.only(right: 8),
-              child: ChoiceChip(
-                label: Text(filter),
-                selected: isSelected,
-                onSelected: (_) {
-                  setState(() {
-                    _selectedFilter = filter;
-                  });
-                },
-                labelStyle: TextStyle(
-                  color: isSelected ? AppTheme.white : AppTheme.cocoa,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                backgroundColor: AppTheme.white,
-                selectedColor: AppTheme.primaryDeep,
-                side: BorderSide(
-                  color: isSelected ? AppTheme.primaryDeep : AppTheme.dustyRose,
-                  width: 1.5,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                showCheckmark: false,
-              ),
+              child: _buildChip(_filters[index]),
             );
           },
         ),
@@ -622,11 +623,11 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildSectionHeader() {
+  Widget _buildSectionHeader(double hPad) {
     final isSortActive = _selectedSort != 'Default';
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+      padding: EdgeInsets.fromLTRB(hPad, 18, hPad, 12),
       child: Row(
         children: [
           Text('Varian Mochi', style: _displayStyle(20)),
@@ -705,34 +706,138 @@ class _HomePageState extends State<HomePage> {
     final mochiList = _filteredMochi;
 
     return SafeArea(
-      child: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(child: _buildHeader()),
-          SliverToBoxAdapter(child: _buildSearchBar()),
-          SliverToBoxAdapter(child: _buildPromoBanner()),
-          SliverToBoxAdapter(child: _buildFilterChips()),
-          SliverToBoxAdapter(child: _buildSectionHeader()),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final isRow = width >= Breakpoints.medium;
+          final useGrid = width >= Breakpoints.grid;
+          final hPad = isRow ? 32.0 : 20.0;
 
-          if (mochiList.isEmpty)
-            SliverToBoxAdapter(child: _buildEmptyResult())
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final mochi = mochiList[index];
-
-                  return AnimatedMochiCard(
-                    index: index,
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: Breakpoints.maxContent,
+              ),
+              child: CustomScrollView(
+                slivers: [
+                  // HEADER
+                  SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _buildPolishedCard(context, mochi),
+                      padding: EdgeInsets.fromLTRB(hPad, 18, hPad, 0),
+                      child: isRow
+                          ? Row(
+                              children: [
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 300,
+                                  ),
+                                  child: _buildGreeting(true),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Align(
+                                    alignment: Alignment.centerRight,
+                                    child: ConstrainedBox(
+                                      constraints: const BoxConstraints(
+                                        maxWidth: 420,
+                                      ),
+                                      child: _buildSearchField(),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                _buildCartButton(),
+                              ],
+                            )
+                          : Row(
+                              children: [
+                                Expanded(
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: ConstrainedBox(
+                                      constraints: const BoxConstraints(
+                                        maxWidth: 240,
+                                      ),
+                                      child: _buildGreeting(false),
+                                    ),
+                                  ),
+                                ),
+                                _buildCartButton(),
+                              ],
+                            ),
                     ),
-                  );
-                }, childCount: mochiList.length),
+                  ),
+
+                  // PENCARIAN (layar sempit)
+                  if (!isRow)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 0),
+                        child: _buildSearchField(),
+                      ),
+                    ),
+
+                  // BANNER
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 0),
+                      child: _buildPromoBanner(isRow),
+                    ),
+                  ),
+
+                  // CHIP RASA
+                  SliverToBoxAdapter(child: _buildFilterChips(isRow, hPad)),
+
+                  // JUDUL + SORT
+                  SliverToBoxAdapter(child: _buildSectionHeader(hPad)),
+
+                  // DAFTAR PRODUK
+                  if (mochiList.isEmpty)
+                    SliverToBoxAdapter(child: _buildEmptyResult())
+                  else if (useGrid)
+                    SliverPadding(
+                      padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 30),
+                      sliver: SliverGrid(
+                        gridDelegate:
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 380,
+                              mainAxisSpacing: 16,
+                              crossAxisSpacing: 16,
+                              mainAxisExtent: 310,
+                            ),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final mochi = mochiList[index];
+
+                          return AnimatedMochiCard(
+                            index: index,
+                            child: _buildGridCard(context, mochi),
+                          );
+                        }, childCount: mochiList.length),
+                      ),
+                    )
+                  else
+                    SliverPadding(
+                      padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 30),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final mochi = mochiList[index];
+
+                          return AnimatedMochiCard(
+                            index: index,
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _buildPolishedCard(context, mochi),
+                            ),
+                          );
+                        }, childCount: mochiList.length),
+                      ),
+                    ),
+                ],
               ),
             ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -788,7 +893,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   // ===========================================================
-  // KARTU PRODUK
+  // BAGIAN KARTU YANG DIPAKAI BERSAMA
   // ===========================================================
 
   void _openDetail(BuildContext context, Mochi mochi) {
@@ -820,21 +925,122 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildPolishedCard(BuildContext context, Mochi mochi) {
-    final isFavorite = AppData.isFavorite(mochi.name);
+  BoxDecoration _cardDecoration() {
+    return BoxDecoration(
+      color: AppTheme.white,
+      borderRadius: BorderRadius.circular(24),
+      boxShadow: [
+        BoxShadow(
+          color: AppTheme.cocoa.withValues(alpha: 0.07),
+          blurRadius: 18,
+          offset: const Offset(0, 7),
+        ),
+      ],
+    );
+  }
 
+  // Tombol hati. Ikut berubah saat favorit diubah dari halaman lain.
+  Widget _buildFavoriteButton(Mochi mochi) {
+    return ValueListenableBuilder<List<Map<String, dynamic>>>(
+      valueListenable: AppData.favorites,
+      builder: (context, favorites, child) {
+        return AnimatedFavoriteButton(
+          isFavorite: AppData.isFavorite(mochi.name),
+          onPressed: () {
+            AppData.toggleFavorite(mochi.toMap());
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildRatingPill(double rating) {
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: AppTheme.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.cocoa.withValues(alpha: 0.07),
-            blurRadius: 18,
-            offset: const Offset(0, 7),
+        color: AppTheme.yellow,
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.star_rounded, size: 13, color: AppTheme.cocoa),
+          const SizedBox(width: 3),
+          Text(
+            rating.toString(),
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.cocoa,
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDetailButton(BuildContext context, Mochi mochi) {
+    return SizedBox(
+      height: 36,
+      child: ElevatedButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MochiDetailPage(mochi: mochi),
+            ),
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.softPink,
+          foregroundColor: AppTheme.cocoa,
+          elevation: 0,
+          minimumSize: Size.zero,
+          padding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: const Text(
+          'DETAIL',
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddToCartButton(BuildContext context, Mochi mochi) {
+    return SizedBox(
+      width: 52,
+      height: 36,
+      child: AnimatedCartButton(
+        onPressed: () {
+          AppData.addToCart(mochi.toMap());
+
+          AppSnackBar.success(context, '${mochi.name} ditambahkan ke cart');
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.primary,
+          foregroundColor: AppTheme.white,
+          elevation: 0,
+          minimumSize: Size.zero,
+          padding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: const Icon(Icons.shopping_bag_outlined, size: 18),
+      ),
+    );
+  }
+
+  // ===========================================================
+  // KARTU HORIZONTAL (layar sempit, satu kolom)
+  // ===========================================================
+
+  Widget _buildPolishedCard(BuildContext context, Mochi mochi) {
+    return Container(
+      decoration: _cardDecoration(),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -859,13 +1065,7 @@ class _HomePageState extends State<HomePage> {
                     Positioned(
                       top: 6,
                       right: 6,
-                      child: AnimatedFavoriteButton(
-                        isFavorite: isFavorite,
-                        onPressed: () {
-                          AppData.toggleFavorite(mochi.toMap());
-                          setState(() {});
-                        },
-                      ),
+                      child: _buildFavoriteButton(mochi),
                     ),
                   ],
                 ),
@@ -901,35 +1101,7 @@ class _HomePageState extends State<HomePage> {
 
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.yellow,
-                              borderRadius: BorderRadius.circular(9),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.star_rounded,
-                                  size: 13,
-                                  color: AppTheme.cocoa,
-                                ),
-                                const SizedBox(width: 3),
-                                Text(
-                                  mochi.rating.toString(),
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppTheme.cocoa,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          _buildRatingPill(mochi.rating),
 
                           const Spacer(),
 
@@ -947,70 +1119,11 @@ class _HomePageState extends State<HomePage> {
 
                       Row(
                         children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: 36,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          MochiDetailPage(mochi: mochi),
-                                    ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.softPink,
-                                  foregroundColor: AppTheme.cocoa,
-                                  elevation: 0,
-                                  minimumSize: Size.zero,
-                                  padding: EdgeInsets.zero,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'DETAIL',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
+                          Expanded(child: _buildDetailButton(context, mochi)),
 
                           const SizedBox(width: 8),
 
-                          SizedBox(
-                            width: 52,
-                            height: 36,
-                            child: AnimatedCartButton(
-                              onPressed: () {
-                                AppData.addToCart(mochi.toMap());
-
-                                AppSnackBar.success(
-                                  context,
-                                  '${mochi.name} ditambahkan ke cart',
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primary,
-                                foregroundColor: AppTheme.white,
-                                elevation: 0,
-                                minimumSize: Size.zero,
-                                padding: EdgeInsets.zero,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.shopping_bag_outlined,
-                                size: 18,
-                              ),
-                            ),
-                          ),
+                          _buildAddToCartButton(context, mochi),
                         ],
                       ),
                     ],
@@ -1025,78 +1138,283 @@ class _HomePageState extends State<HomePage> {
   }
 
   // ===========================================================
+  // KARTU VERTIKAL (layar lebar, grid)
+  // ===========================================================
+
+  Widget _buildGridCard(BuildContext context, Mochi mochi) {
+    return Container(
+      decoration: _cardDecoration(),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(24),
+          onTap: () {
+            _openDetail(context, mochi);
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // GAMBAR + FAVORIT
+                Expanded(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      MochiImage(
+                        path: mochi.image,
+                        width: double.infinity,
+                        height: double.infinity,
+                        borderRadius: 18,
+                      ),
+
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: _buildFavoriteButton(mochi),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        mochi.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: _displayStyle(16),
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    Text(
+                      mochi.price,
+                      style: _displayStyle(16, color: AppTheme.primaryDeep),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 2),
+
+                Text(
+                  mochi.description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.35,
+                    color: AppTheme.cocoa.withValues(alpha: 0.8),
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                Row(
+                  children: [
+                    _buildRatingPill(mochi.rating),
+
+                    const SizedBox(width: 8),
+
+                    Expanded(child: _buildDetailButton(context, mochi)),
+
+                    const SizedBox(width: 8),
+
+                    _buildAddToCartButton(context, mochi),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ===========================================================
+  // NAVIGASI: BAR BAWAH (sempit) DAN RAIL KIRI (lebar)
+  // ===========================================================
+
+  Widget _buildBottomBar() {
+    return ValueListenableBuilder<List<Map<String, dynamic>>>(
+      valueListenable: AppData.favorites,
+      builder: (context, favorites, child) {
+        return Container(
+          decoration: BoxDecoration(
+            color: AppTheme.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.cocoa.withValues(alpha: 0.08),
+                blurRadius: 20,
+                offset: const Offset(0, -6),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            child: NavigationBar(
+              selectedIndex: _selectedIndex,
+              onDestinationSelected: _onNavigationTap,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              destinations: [
+                const NavigationDestination(
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home_rounded),
+                  label: 'Home',
+                ),
+
+                NavigationDestination(
+                  icon: Badge(
+                    isLabelVisible: favorites.isNotEmpty,
+                    label: Text(favorites.length.toString()),
+                    child: const Icon(Icons.favorite_border_rounded),
+                  ),
+                  selectedIcon: Badge(
+                    isLabelVisible: favorites.isNotEmpty,
+                    label: Text(favorites.length.toString()),
+                    child: const Icon(Icons.favorite_rounded),
+                  ),
+                  label: 'Favorite',
+                ),
+
+                const NavigationDestination(
+                  icon: Icon(Icons.person_outline_rounded),
+                  selectedIcon: Icon(Icons.person_rounded),
+                  label: 'Profile',
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRail() {
+    return ValueListenableBuilder<List<Map<String, dynamic>>>(
+      valueListenable: AppData.favorites,
+      builder: (context, favorites, child) {
+        return Container(
+          decoration: BoxDecoration(
+            color: AppTheme.white,
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.cocoa.withValues(alpha: 0.06),
+                blurRadius: 24,
+                offset: const Offset(6, 0),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: NavigationRail(
+              selectedIndex: _selectedIndex,
+              onDestinationSelected: _onNavigationTap,
+              backgroundColor: Colors.transparent,
+              minWidth: 92,
+              labelType: NavigationRailLabelType.all,
+              indicatorColor: AppTheme.dustyRose,
+              selectedIconTheme: const IconThemeData(
+                color: AppTheme.primaryDeep,
+              ),
+              unselectedIconTheme: const IconThemeData(color: AppTheme.cocoa),
+              selectedLabelTextStyle: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.primaryDeep,
+              ),
+              unselectedLabelTextStyle: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.cocoa,
+              ),
+              leading: const Padding(
+                padding: EdgeInsets.only(top: 12, bottom: 18),
+                child: MochiImage(
+                  path: 'assets/images/mochie_logo.png',
+                  width: 48,
+                  height: 48,
+                  borderRadius: 14,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              destinations: [
+                const NavigationRailDestination(
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home_rounded),
+                  label: Text('Home'),
+                ),
+
+                NavigationRailDestination(
+                  icon: Badge(
+                    isLabelVisible: favorites.isNotEmpty,
+                    label: Text(favorites.length.toString()),
+                    child: const Icon(Icons.favorite_border_rounded),
+                  ),
+                  selectedIcon: Badge(
+                    isLabelVisible: favorites.isNotEmpty,
+                    label: Text(favorites.length.toString()),
+                    child: const Icon(Icons.favorite_rounded),
+                  ),
+                  label: const Text('Favorite'),
+                ),
+
+                const NavigationRailDestination(
+                  icon: Icon(Icons.person_outline_rounded),
+                  selectedIcon: Icon(Icons.person_rounded),
+                  label: Text('Profile'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ===========================================================
   // BUILD
   // ===========================================================
 
   @override
   Widget build(BuildContext context) {
-    final pages = [
-      _buildHomeContent(),
-      FavoritePage(onExplore: () => _onNavigationTap(0)),
-      ProfilePage(onSelectTab: _onNavigationTap),
-    ];
+    final useRail = MediaQuery.sizeOf(context).width >= Breakpoints.wide;
 
-    return Scaffold(
-      backgroundColor: AppTheme.cream,
-      body: pages[_selectedIndex],
+    // IndexedStack menjaga posisi scroll tiap tab saat berpindah.
+    final body = IndexedStack(
+      index: _selectedIndex,
+      children: [
+        _buildHomeContent(),
+        FavoritePage(onExplore: () => _onNavigationTap(0)),
+        ProfilePage(onSelectTab: _onNavigationTap),
+      ],
+    );
 
-      bottomNavigationBar: ValueListenableBuilder<List<Map<String, dynamic>>>(
-        valueListenable: AppData.favorites,
-        builder: (context, favorites, child) {
-          return Container(
-            decoration: BoxDecoration(
-              color: AppTheme.white,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.cocoa.withValues(alpha: 0.08),
-                  blurRadius: 20,
-                  offset: const Offset(0, -6),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
-              child: NavigationBar(
-                selectedIndex: _selectedIndex,
-                onDestinationSelected: _onNavigationTap,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                destinations: [
-                  const NavigationDestination(
-                    icon: Icon(Icons.home_outlined),
-                    selectedIcon: Icon(Icons.home_rounded),
-                    label: 'Home',
-                  ),
-
-                  NavigationDestination(
-                    icon: Badge(
-                      isLabelVisible: favorites.isNotEmpty,
-                      label: Text(favorites.length.toString()),
-                      child: const Icon(Icons.favorite_border_rounded),
-                    ),
-                    selectedIcon: Badge(
-                      isLabelVisible: favorites.isNotEmpty,
-                      label: Text(favorites.length.toString()),
-                      child: const Icon(Icons.favorite_rounded),
-                    ),
-                    label: 'Favorite',
-                  ),
-
-                  const NavigationDestination(
-                    icon: Icon(Icons.person_outline_rounded),
-                    selectedIcon: Icon(Icons.person_rounded),
-                    label: 'Profile',
-                  ),
+    // Tombol kembali di tab Favorite/Profile membawa ke tab Home,
+    // bukan langsung keluar aplikasi.
+    return PopScope(
+      canPop: _selectedIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          _onNavigationTap(0);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.cream,
+        body: useRail
+            ? Row(
+                children: [
+                  _buildRail(),
+                  Expanded(child: body),
                 ],
-              ),
-            ),
-          );
-        },
+              )
+            : body,
+        bottomNavigationBar: useRail ? null : _buildBottomBar(),
       ),
     );
   }
@@ -1165,9 +1483,13 @@ class _AnimatedMochiCardState extends State<AnimatedMochiCard>
   void initState() {
     super.initState();
 
+    // Jeda dibatasi agar kartu di bagian bawah daftar
+    // tidak muncul terlambat saat di-scroll.
+    final step = widget.index > 5 ? 5 : widget.index;
+
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 350 + (widget.index * 70)),
+      duration: Duration(milliseconds: 350 + (step * 70)),
     );
 
     _fadeAnimation = CurvedAnimation(
@@ -1180,7 +1502,7 @@ class _AnimatedMochiCardState extends State<AnimatedMochiCard>
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
-    Future.delayed(Duration(milliseconds: widget.index * 70), () {
+    Future.delayed(Duration(milliseconds: step * 70), () {
       if (mounted) {
         _controller.forward();
       }

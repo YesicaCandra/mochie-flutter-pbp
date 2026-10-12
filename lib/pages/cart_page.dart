@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../widgets/app_snackbar.dart';
 import '../widgets/gradient_button.dart';
 import '../widgets/mochi_image.dart';
+import '../widgets/responsive.dart';
 import 'checkout_page.dart';
 
 class CartPage extends StatelessWidget {
@@ -352,8 +353,15 @@ class CartPage extends StatelessWidget {
     );
   }
 
+  void _goToCheckout(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const CheckoutPage()),
+    );
+  }
+
   // =========================================================
-  // RINGKASAN BAWAH
+  // RINGKASAN BAWAH (layar sempit)
   // =========================================================
 
   Widget _summary(BuildContext context, double total) {
@@ -406,18 +414,209 @@ class CartPage extends StatelessWidget {
                 label: 'LANJUT KE CHECKOUT',
                 trailingIcon: Icons.arrow_forward_rounded,
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const CheckoutPage(),
-                    ),
-                  );
+                  _goToCheckout(context);
                 },
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  // =========================================================
+  // PANEL RINGKASAN (layar lebar)
+  // =========================================================
+
+  Widget _summaryPanel(BuildContext context, double total, int itemCount) {
+    return Container(
+      padding: const EdgeInsets.all(26),
+      decoration: BoxDecoration(
+        color: AppTheme.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.cocoa.withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Ringkasan',
+            style: TextStyle(
+              fontFamily: AppTheme.fontDisplay,
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.cocoa,
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          _panelRow('Jumlah item', '$itemCount'),
+
+          const SizedBox(height: 8),
+
+          _panelRow('Subtotal', _formatRupiah(total)),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Divider(height: 1, thickness: 1.5, color: AppTheme.peach),
+          ),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Total Pesanan',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.cocoa,
+                ),
+              ),
+              Text(
+                _formatRupiah(total),
+                style: const TextStyle(
+                  fontFamily: AppTheme.fontDisplay,
+                  fontSize: 30,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.primaryDeep,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 18),
+
+          SizedBox(
+            width: double.infinity,
+            child: GradientButton(
+              label: 'LANJUT KE CHECKOUT',
+              trailingIcon: Icons.arrow_forward_rounded,
+              onPressed: () {
+                _goToCheckout(context);
+              },
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          Center(
+            child: Text(
+              'Ongkir dihitung di langkah berikutnya',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.cocoa.withValues(alpha: 0.75),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _panelRow(String title, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.cocoa,
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.cocoa,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // =========================================================
+  // BODY
+  // =========================================================
+
+  Widget _buildBody(
+    BuildContext context,
+    List<Map<String, dynamic>> cart,
+    double total,
+  ) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= Breakpoints.wide;
+
+        if (isWide) {
+          final itemCount = cart.fold<int>(
+            0,
+            (sum, item) => sum + _getQuantity(item),
+          );
+
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: Breakpoints.maxContent,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(32, 8, 32, 32),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        itemCount: cart.length,
+                        itemBuilder: (context, index) {
+                          return _cartItem(context, cart[index]);
+                        },
+                      ),
+                    ),
+
+                    const SizedBox(width: 28),
+
+                    SizedBox(
+                      width: 360,
+                      child: SingleChildScrollView(
+                        child: _summaryPanel(context, total, itemCount),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
+        return ResponsiveCenter(
+          maxWidth: 720,
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                  itemCount: cart.length,
+                  itemBuilder: (context, index) {
+                    return _cartItem(context, cart[index]);
+                  },
+                ),
+              ),
+
+              _summary(context, total),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -462,21 +661,7 @@ class CartPage extends StatelessWidget {
 
           final total = AppData.getCartTotal();
 
-          return Column(
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-                  itemCount: cart.length,
-                  itemBuilder: (context, index) {
-                    return _cartItem(context, cart[index]);
-                  },
-                ),
-              ),
-
-              _summary(context, total),
-            ],
-          );
+          return _buildBody(context, cart, total);
         },
       ),
     );
