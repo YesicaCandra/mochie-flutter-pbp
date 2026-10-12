@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 // Latar bergerak untuk halaman Login dan Register.
 // - Gradient pastel berputar pelan.
 // - Bulatan dan cincin melayang naik-turun.
+// - Maskot MOCHIÉ melayang pada layout lebar.
 // Animasi berhenti otomatis jika pengaturan "kurangi gerakan" aktif.
 class AnimatedMochiBackground extends StatefulWidget {
   final Widget child;
@@ -69,6 +70,45 @@ class _AnimatedMochiBackgroundState extends State<AnimatedMochiBackground>
     );
   }
 
+  // Maskot MOCHIÉ yang melayang perlahan.
+  Widget _buildMochiMascot({required double width, required double height}) {
+    final mascotSize = width < 1000 ? 125.0 : 155.0;
+
+    return Positioned(
+      left: width * 0.30,
+      top: height * 0.57,
+      child: IgnorePointer(
+        child: RepaintBoundary(
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              final reduceMotion = MediaQuery.disableAnimationsOf(context);
+
+              final dy = reduceMotion
+                  ? 0.0
+                  : math.sin(_controller.value * 2 * math.pi) * 10;
+
+              return Transform.translate(offset: Offset(0, dy), child: child);
+            },
+            child: Opacity(
+              opacity: 0.96,
+              child: Image.asset(
+                'assets/images/mochi_mascot.png',
+                width: mascotSize,
+                height: mascotSize,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  // Background tetap aman jika aset belum tersedia.
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -78,7 +118,7 @@ class _AnimatedMochiBackgroundState extends State<AnimatedMochiBackground>
 
         return Stack(
           children: [
-            // Gradient berputar pelan + bentuk melayang
+            // Gradient berputar pelan + bentuk melayang.
             Positioned.fill(
               child: RepaintBoundary(
                 child: AnimatedBuilder(
@@ -149,7 +189,10 @@ class _AnimatedMochiBackgroundState extends State<AnimatedMochiBackground>
               ),
             ),
 
-            // Konten halaman
+            // Maskot hanya ditampilkan pada layout lebar.
+            if (w >= 720) _buildMochiMascot(width: w, height: h),
+
+            // Konten halaman tetap berada di atas background.
             Positioned.fill(child: widget.child),
           ],
         );
