@@ -5,6 +5,7 @@ import '../models/mochi.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_snackbar.dart';
 import '../widgets/mochi_image.dart';
+import '../widgets/responsive.dart';
 import 'mochi_detail_page.dart';
 
 class FavoritePage extends StatelessWidget {
@@ -411,20 +412,44 @@ class FavoritePage extends StatelessWidget {
             return _emptyFavorite(context);
           }
 
-          return Column(
-            children: [
-              _header(favorites.length),
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final useGrid = constraints.maxWidth >= Breakpoints.grid;
 
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                  itemCount: favorites.length,
-                  itemBuilder: (context, index) {
-                    return _favoriteCard(context, favorites[index]);
-                  },
+              return ResponsiveCenter(
+                maxWidth: Breakpoints.maxContent,
+                child: Column(
+                  children: [
+                    _header(favorites.length),
+
+                    Expanded(
+                      child: useGrid
+                          ? GridView.builder(
+                              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                              gridDelegate:
+                                  const SliverGridDelegateWithMaxCrossAxisExtent(
+                                    maxCrossAxisExtent: 480,
+                                    mainAxisExtent: 172,
+                                    crossAxisSpacing: 16,
+                                    mainAxisSpacing: 4,
+                                  ),
+                              itemCount: favorites.length,
+                              itemBuilder: (context, index) {
+                                return _favoriteCard(context, favorites[index]);
+                              },
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                              itemCount: favorites.length,
+                              itemBuilder: (context, index) {
+                                return _favoriteCard(context, favorites[index]);
+                              },
+                            ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+              );
+            },
           );
         },
       ),

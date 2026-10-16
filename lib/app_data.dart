@@ -167,6 +167,17 @@ class AppData {
   }
 
   // =========================================================
+  // BERSIHKAN SEMUA DATA SESI (dipakai saat logout)
+  // =========================================================
+
+  static void clearAll() {
+    favorites.value = [];
+    cart.value = [];
+    orderHistory.value = [];
+    profilePhoto.value = null;
+  }
+
+  // =========================================================
   // GET CART TOTAL
   // =========================================================
 

@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../app_data.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_snackbar.dart';
+import '../widgets/responsive.dart';
 import 'about_page.dart';
 import 'cart_page.dart';
 import 'login_page.dart';
@@ -409,70 +410,73 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: AppTheme.cream,
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Profile',
-                style: TextStyle(
-                  fontFamily: AppTheme.fontDisplay,
-                  fontSize: 26,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.cocoa,
+        child: ResponsiveCenter(
+          maxWidth: 720,
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Profile',
+                  style: TextStyle(
+                    fontFamily: AppTheme.fontDisplay,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.cocoa,
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              _buildHeaderCard(),
+                _buildHeaderCard(),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-              Text('About Me', style: _sectionStyle()),
+                Text('About Me', style: _sectionStyle()),
 
-              const SizedBox(height: 8),
+                const SizedBox(height: 8),
 
-              _buildAboutMeCard(),
+                _buildAboutMeCard(),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-              _buildMenuCard(),
+                _buildMenuCard(),
 
-              const SizedBox(height: 18),
+                const SizedBox(height: 18),
 
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    _showLogoutDialog(context);
-                  },
-                  icon: const Icon(Icons.logout_outlined),
-                  label: const Text('Logout'),
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      _showLogoutDialog(context);
+                    },
+                    icon: const Icon(Icons.logout_outlined),
+                    label: const Text('Logout'),
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              Center(
-                child: Text(
-                  'Mochié • Made with love',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.cocoa.withValues(alpha: 0.75),
+                Center(
+                  child: Text(
+                    'Mochié • Made with love',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.cocoa.withValues(alpha: 0.75),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -509,6 +513,9 @@ class _ProfilePageState extends State<ProfilePage> {
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(dialogContext);
+
+                // Bersihkan data sesi: keranjang, favorit, riwayat, foto.
+                AppData.clearAll();
 
                 Navigator.pushAndRemoveUntil(
                   context,

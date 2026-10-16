@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/mochi_image.dart';
+import '../widgets/responsive.dart';
 
 // Halaman tentang aplikasi Mochié.
 // Dibuka dari menu "Tentang Mochié" di halaman Profile.
@@ -158,35 +159,38 @@ class AboutPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppTheme.cream,
       appBar: AppBar(title: const Text('About MOCHIÉ')),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildBrandCard(),
+      body: ResponsiveCenter(
+        maxWidth: 720,
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildBrandCard(),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            Text('Tentang Aplikasi', style: _sectionStyle()),
+              Text('Tentang Aplikasi', style: _sectionStyle()),
 
-            const SizedBox(height: 8),
+              const SizedBox(height: 8),
 
-            _buildAppInfoCard(),
+              _buildAppInfoCard(),
 
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            Center(
-              child: Text(
-                'MOCHIÉ • Made with ♡',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.cocoa.withValues(alpha: 0.75),
+              Center(
+                child: Text(
+                  'MOCHIÉ • Made with ♡',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.cocoa.withValues(alpha: 0.75),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

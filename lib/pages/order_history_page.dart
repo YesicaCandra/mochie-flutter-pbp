@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../widgets/app_snackbar.dart';
 import '../widgets/gradient_button.dart';
 import '../widgets/mochi_image.dart';
+import '../widgets/responsive.dart';
 
 class OrderHistoryPage extends StatefulWidget {
   final bool showSuccessMessage;
@@ -487,7 +488,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                     ),
                   )
                 : GradientButton(
-                    label: 'UPDATE STATUS',
+                    label: 'UPDATE STATUS (SIMULASI)',
                     height: 46,
                     fontSize: 13,
                     onPressed: () {
@@ -677,15 +678,18 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
             return _emptyState();
           }
 
-          return ListView.builder(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
-            itemCount: orders.length,
-            itemBuilder: (context, index) {
-              final order = orders[index];
+          return ResponsiveCenter(
+            maxWidth: 760,
+            child: ListView.builder(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
+              itemCount: orders.length,
+              itemBuilder: (context, index) {
+                final order = orders[index];
 
-              return _orderCard(order, index);
-            },
+                return _orderCard(order, index);
+              },
+            ),
           );
         },
       ),

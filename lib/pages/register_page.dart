@@ -124,206 +124,258 @@ class _RegisterPageState extends State<RegisterPage> {
   // BUILD
   // =========================================================
 
+  // Judul besar di sisi kiri pada layar lebar (selaras dengan Login).
+  Widget _buildWideHeading() {
+    return const Positioned(
+      left: 64,
+      top: 0,
+      bottom: 0,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Buat Akun',
+              style: TextStyle(
+                fontFamily: AppTheme.fontDisplay,
+                fontSize: 72,
+                fontWeight: FontWeight.w600,
+                height: 1,
+                color: AppTheme.primaryDeep,
+              ),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Gabung dan nikmati manisnya Mochié',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.5,
+                color: AppTheme.cocoa,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Judul besar di kiri hanya jika ruang cukup, agar tidak bertumpuk.
+    final isWide = MediaQuery.sizeOf(context).width >= 960;
+
     return Scaffold(
       backgroundColor: AppTheme.cream,
       extendBodyBehindAppBar: true,
       appBar: AppBar(backgroundColor: Colors.transparent),
       body: AnimatedMochiBackground(
         child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'Buat Akun',
-                      style: TextStyle(
-                        fontFamily: AppTheme.fontDisplay,
-                        fontSize: 34,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryDeep,
-                      ),
-                    ),
-
-                    const Text(
-                      'Gabung dan nikmati manisnya Mochié',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.cocoa,
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(28),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(22),
-                          decoration: BoxDecoration(
-                            color: AppTheme.white.withValues(alpha: 0.9),
-                            borderRadius: BorderRadius.circular(28),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.primary.withValues(alpha: 0.16),
-                                blurRadius: 28,
-                                offset: const Offset(0, 12),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            children: [
-                              CustomTextField(
-                                label: 'Nama',
-                                hint: 'Nama lengkap',
-                                controller: _nameController,
-                                errorText: _nameError,
-                                textInputAction: TextInputAction.next,
-                                onChanged: (_) {
-                                  if (_nameError != null) {
-                                    setState(() {
-                                      _nameError = null;
-                                    });
-                                  }
-                                },
-                              ),
-
-                              const SizedBox(height: 12),
-
-                              CustomTextField(
-                                label: 'Email',
-                                hint: 'nama@email.com',
-                                controller: _emailController,
-                                errorText: _emailError,
-                                keyboardType: TextInputType.emailAddress,
-                                textInputAction: TextInputAction.next,
-                                onChanged: (_) {
-                                  if (_emailError != null) {
-                                    setState(() {
-                                      _emailError = null;
-                                    });
-                                  }
-                                },
-                              ),
-
-                              const SizedBox(height: 12),
-
-                              CustomTextField(
-                                label: 'Password',
-                                hint: 'Minimal 6 karakter',
-                                controller: _passwordController,
-                                errorText: _passwordError,
-                                obscureText: !_isPasswordVisible,
-                                textInputAction: TextInputAction.next,
-                                suffixIcon: _visibilityButton(
-                                  visible: _isPasswordVisible,
-                                  onPressed: () {
-                                    setState(() {
-                                      _isPasswordVisible = !_isPasswordVisible;
-                                    });
-                                  },
-                                ),
-                                onChanged: (_) {
-                                  if (_passwordError != null) {
-                                    setState(() {
-                                      _passwordError = null;
-                                    });
-                                  }
-                                },
-                              ),
-
-                              const SizedBox(height: 12),
-
-                              CustomTextField(
-                                label: 'Konfirmasi Password',
-                                hint: 'Ulangi password',
-                                controller: _confirmController,
-                                errorText: _confirmError,
-                                obscureText: !_isConfirmVisible,
-                                textInputAction: TextInputAction.done,
-                                onSubmitted: (_) {
-                                  _register();
-                                },
-                                suffixIcon: _visibilityButton(
-                                  visible: _isConfirmVisible,
-                                  onPressed: () {
-                                    setState(() {
-                                      _isConfirmVisible = !_isConfirmVisible;
-                                    });
-                                  },
-                                ),
-                                onChanged: (_) {
-                                  if (_confirmError != null) {
-                                    setState(() {
-                                      _confirmError = null;
-                                    });
-                                  }
-                                },
-                              ),
-
-                              const SizedBox(height: 18),
-
-                              SizedBox(
-                                width: double.infinity,
-                                child: GradientButton(
-                                  label: 'Daftar',
-                                  onPressed: _register,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+          child: Stack(
+            children: [
+              if (isWide) _buildWideHeading(),
+              Align(
+                alignment: isWide ? Alignment.centerRight : Alignment.center,
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(24, 48, isWide ? 96 : 24, 24),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'Sudah punya akun? ',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.cocoa,
+                        if (!isWide) ...[
+                          const Text(
+                            'Buat Akun',
+                            style: TextStyle(
+                              fontFamily: AppTheme.fontDisplay,
+                              fontSize: 34,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primaryDeep,
+                            ),
                           ),
-                        ),
 
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: const Size(0, 36),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: const Text(
-                            'Masuk',
+                          const Text(
+                            'Gabung dan nikmati manisnya Mochié',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w800,
-                              decoration: TextDecoration.underline,
+                              color: AppTheme.cocoa,
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+                        ],
+
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(28),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(22),
+                              decoration: BoxDecoration(
+                                color: AppTheme.white.withValues(alpha: 0.9),
+                                borderRadius: BorderRadius.circular(28),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.primary.withValues(
+                                      alpha: 0.16,
+                                    ),
+                                    blurRadius: 28,
+                                    offset: const Offset(0, 12),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  CustomTextField(
+                                    label: 'Nama',
+                                    hint: 'Nama lengkap',
+                                    controller: _nameController,
+                                    errorText: _nameError,
+                                    textInputAction: TextInputAction.next,
+                                    onChanged: (_) {
+                                      if (_nameError != null) {
+                                        setState(() {
+                                          _nameError = null;
+                                        });
+                                      }
+                                    },
+                                  ),
+
+                                  const SizedBox(height: 12),
+
+                                  CustomTextField(
+                                    label: 'Email',
+                                    hint: 'nama@email.com',
+                                    controller: _emailController,
+                                    errorText: _emailError,
+                                    keyboardType: TextInputType.emailAddress,
+                                    textInputAction: TextInputAction.next,
+                                    onChanged: (_) {
+                                      if (_emailError != null) {
+                                        setState(() {
+                                          _emailError = null;
+                                        });
+                                      }
+                                    },
+                                  ),
+
+                                  const SizedBox(height: 12),
+
+                                  CustomTextField(
+                                    label: 'Password',
+                                    hint: 'Minimal 6 karakter',
+                                    controller: _passwordController,
+                                    errorText: _passwordError,
+                                    obscureText: !_isPasswordVisible,
+                                    textInputAction: TextInputAction.next,
+                                    suffixIcon: _visibilityButton(
+                                      visible: _isPasswordVisible,
+                                      onPressed: () {
+                                        setState(() {
+                                          _isPasswordVisible =
+                                              !_isPasswordVisible;
+                                        });
+                                      },
+                                    ),
+                                    onChanged: (_) {
+                                      if (_passwordError != null) {
+                                        setState(() {
+                                          _passwordError = null;
+                                        });
+                                      }
+                                    },
+                                  ),
+
+                                  const SizedBox(height: 12),
+
+                                  CustomTextField(
+                                    label: 'Konfirmasi Password',
+                                    hint: 'Ulangi password',
+                                    controller: _confirmController,
+                                    errorText: _confirmError,
+                                    obscureText: !_isConfirmVisible,
+                                    textInputAction: TextInputAction.done,
+                                    onSubmitted: (_) {
+                                      _register();
+                                    },
+                                    suffixIcon: _visibilityButton(
+                                      visible: _isConfirmVisible,
+                                      onPressed: () {
+                                        setState(() {
+                                          _isConfirmVisible =
+                                              !_isConfirmVisible;
+                                        });
+                                      },
+                                    ),
+                                    onChanged: (_) {
+                                      if (_confirmError != null) {
+                                        setState(() {
+                                          _confirmError = null;
+                                        });
+                                      }
+                                    },
+                                  ),
+
+                                  const SizedBox(height: 18),
+
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: GradientButton(
+                                      label: 'Daftar',
+                                      onPressed: _register,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
+
+                        const SizedBox(height: 12),
+
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Sudah punya akun? ',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.cocoa,
+                              ),
+                            ),
+
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: const Size(0, 36),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Text(
+                                'Masuk',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ),
       ),
